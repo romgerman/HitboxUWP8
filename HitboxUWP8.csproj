@@ -41,6 +41,8 @@
     <Compile Include="Client.cs" />
     <Compile Include="Endpoints.cs" />
     <Compile Include="EventHandlers.cs" />
+    <Compile Include="HitBoxChat.cs" />
+    <Compile Include="HitBoxLivestreamViewer.cs" />
     <Compile Include="HitboxObjects.cs" />
     <Compile Include="JsonHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

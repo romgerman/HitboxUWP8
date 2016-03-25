@@ -13,9 +13,22 @@ namespace HitboxUWP8
 		public string Token	  { get; set; }
 	}
 
-	public class HitboxException : Exception
+	public class ViewerCountChangedArgs : EventArgs
 	{
-		public HitboxException() { }
-		public HitboxException(string message) : base(message) { }
+		public int CurrentCount { get; set; }
+	}
+
+	// Exceptions
+
+	internal static class HitBoxExceptionList
+	{
+		public const string NotLoggedIn = "not logged in";
+		public const string AuthFailed = "authentication_failed";
+	}
+
+	public class HitBoxException : Exception
+	{
+		public HitBoxException() { }
+		public HitBoxException(string message) : base(message) { }
 	}
 }

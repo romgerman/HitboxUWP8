@@ -61,8 +61,8 @@ namespace HitboxUWP8
 		public string   Duration	{ get; set; }
 		public int		Views		{ get; set; }
 		public string	CoverUrl	{ get; set; }
-		public HitBoxUser	User		{ get; set; }
-		public HitBoxGame    Game		{ get; set; }
+		public HitBoxUser User		{ get; set; }
+		public HitBoxGame Game		{ get; set; }
 	}
 
 	public class HitBoxAccessLevels

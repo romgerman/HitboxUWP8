@@ -25,7 +25,7 @@ namespace HitboxUWP8
 			browser.Source = new Uri(HitBoxEndpoint.Login + "?" + (forceLogin ? "force_auth=true&" : "") + "app_token=" + _client.AppKey, UriKind.Absolute);
 		}
 
-		private async void browser_NavigationCompleted(WebView sender, WebViewNavigationCompletedEventArgs args)
+		private async void browser_LoadCompleted(object sender, NavigationEventArgs args)
 		{
 			string url = args.Uri.Query;
 			bool isDone = false;
@@ -47,6 +47,8 @@ namespace HitboxUWP8
 
 				_client.OnLoggedIn(new LoginEventArgs() { Token = _client._authOrAccessToken, State = LoginEventArgs.States.OK, Method = LoginEventArgs.Methods.FirstLogin });
 
+				_client._isLoggedIn = true;
+
 				isDone = true;
 			}
 			else if (url.StartsWith("?authToken=", StringComparison.CurrentCultureIgnoreCase))
@@ -57,10 +59,12 @@ namespace HitboxUWP8
 
 				_client.OnLoggedIn(new LoginEventArgs() { Token = _client._authOrAccessToken, State = LoginEventArgs.States.OK, Method = LoginEventArgs.Methods.FirstLogin });
 
+				_client._isLoggedIn = true;
+
 				isDone = true;
 			}
 
-			if(isDone)
+			if (isDone)
 			{
 				Frame.GoBack();
 				//Frame.BackStack.RemoveAt(Frame.BackStack.Count - 1);

@@ -8,7 +8,7 @@
     mc:Ignorable="d">
 
 	<Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-		<WebView x:Name="browser" NavigationCompleted="browser_NavigationCompleted" />
+		<WebView x:Name="browser" LoadCompleted="browser_LoadCompleted" />
 	</Grid>
 
 	<Page.BottomAppBar>

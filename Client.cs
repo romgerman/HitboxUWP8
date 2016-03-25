@@ -5,7 +5,6 @@ using System.Collections.Generic;
 
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml;
-using Windows.Networking.Sockets;
 using Windows.Data.Json;
 
 using Newtonsoft.Json.Linq;
@@ -21,14 +20,14 @@ namespace HitboxUWP8
 		public HitBoxUser User { get; set; }
 		
 		public string AppKey { get { return _key; } }
+		public bool IsLoggedIn { get { return _isLoggedIn; } }
+
+		internal bool _isLoggedIn;
 
 		internal string _authOrAccessToken;
 
 		private string _key;
 		private string _secret;
-
-		//private MessageWebSocket _chatSocket;
-		//private MessageWebSocket _viewerSocket;
 
 		public static class ChatServerInfo
 		{
@@ -36,24 +35,25 @@ namespace HitboxUWP8
 			public static string SocketID;
 		}
 
-		public HitBoxClient() { }
-
 		public HitBoxClient(string key, string secret)
 		{
 			_key	= key;
 			_secret = secret;
-			User	= new HitBoxUser();
 		}
 
-		/// <summary>Login with password and email</summary>
+		/// <summary>Login with modal window</summary>
 		public void Login(bool force = false)
 		{
-			(Window.Current.Content as Frame).Navigate(typeof(LoginPage), new object[] { force, this });
+			if(!_isLoggedIn)
+				(Window.Current.Content as Frame).Navigate(typeof(LoginPage), new object[] { force, this });
 		}
 
 		/// <summary>Login with auth or access token</summary>
 		public async void Login(string authOrAccessToken)
 		{
+			if (_isLoggedIn)
+				return;
+
 			string response = await Web.GET(HitBoxEndpoint.TokenValidation + _key + "?token=" + authOrAccessToken);
 
 			bool error = JObject.Parse(response)["error"].ToObject<bool>();
@@ -68,10 +68,18 @@ namespace HitboxUWP8
 
 			User = await GetUser(await GetUserFromToken(_authOrAccessToken), true);
 
+			_isLoggedIn = true;
+
 			OnLoggedIn(new LoginEventArgs() { Method = LoginEventArgs.Methods.Another, State = LoginEventArgs.States.OK });
 		}
 
-		/// <summary>Returns null if auth was failed</summary>
+		public void Logout()
+		{
+			_isLoggedIn = false;
+			User = null;
+		}
+
+		/// <summary>Throws exception if auth was failed</summary>
 		internal async Task<string> GetAccessToken(string requestToken)
 		{
 			string hash = Convert.ToBase64String(Encoding.UTF8.GetBytes(_key + _secret));
@@ -84,33 +92,39 @@ namespace HitboxUWP8
 			}.Stringify());
 
 			if (response.Equals("authentication_failed", StringComparison.CurrentCultureIgnoreCase))
-				return null;
+				throw new HitBoxException(HitBoxExceptionList.AuthFailed);
 
 			return JObject.Parse(response)["access_token"].ToString();
 		}
 
 		/// <summary>Returns null if no user was found</summary>
-		public static async Task<string> GetUserFromToken(string token)
+		internal static async Task<string> GetUserFromToken(string token)
 		{
-			JObject response = JObject.Parse(await Web.GET(HitBoxEndpoint.UserFromToken + token));
+			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.UserFromToken + token));
 
-			return (response["user_name"].IsNull() ? null : response["user_name"].ToString());
+			return (jmessage["user_name"].IsNull() ? null : jmessage["user_name"].ToString());
 		}
 
 		/// <summary>Returns user's stream key. Returns null on error</summary>
 		public async Task<string> GetStreamKey()
 		{
+			if (!_isLoggedIn)
+				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
+
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.StreamKey + User.Username + "?authToken=" + _authOrAccessToken));
 
 			if (!jmessage["error"].IsNull())
 				return null;
 
-			return jmessage["streamKey"].ToString();
+			return User.Username + "?key=" + jmessage["streamKey"].ToString();
 		}
 
-		/// <summary>Returns access levels for channel</summary>
+		/// <summary>Returns access levels for specified channel</summary>
 		public async Task<HitBoxAccessLevels> GetAccessLevels(string channel)
 		{
+			if (!_isLoggedIn)
+				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
+
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.AccessLevels + channel + "/" + _authOrAccessToken));
 
 			if (jmessage["user_id"].IsNull())
@@ -144,8 +158,11 @@ namespace HitboxUWP8
 		}
 
 		/// <summary>Editors can run it</summary>
-		public async void RunCommercialBreak(string channel, int count = 1)
+		public async void RunCommercialBreak(string channel, int count = 1) // TODO: THIS
 		{
+			if (!_isLoggedIn)
+				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
+
 			JObject jmessage = JObject.Parse(await Web.POST(HitBoxEndpoint.CommercialBreak + channel + "/" + count, new JsonObject()
 			{
 				{ "user_name", JsonValue.CreateStringValue(User.Username) },
@@ -171,10 +188,13 @@ namespace HitboxUWP8
 			*/
 		}
 
-		/// <summary>Returns last commecrial break on given channel</summary>
+		/// <summary>Returns last commecrial break on given channel. Returns null if channel never run ads</summary>
 		public static async Task<HitBoxLastCommBreak> GetLastCommercialBreak(string channel)
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.CommercialBreak + channel));
+
+			if (jmessage["seconds_ago"] == null)
+				return null;
 
 			return new HitBoxLastCommBreak()
 			{
@@ -187,6 +207,9 @@ namespace HitboxUWP8
 		/// <summary>Returns true on success, false on error</summary>
 		public async Task<bool> TwitterPost(string message)
 		{
+			if (!_isLoggedIn)
+				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
+
 			JObject jmessage = JObject.Parse(await Web.POST(HitBoxEndpoint.TwitterPost + "?authToken=" + _authOrAccessToken + "&user_name=" + User.Username, new JsonObject()
 			{
 				{ "user_name", JsonValue.CreateStringValue(User.Username) },
@@ -203,6 +226,9 @@ namespace HitboxUWP8
 		/// <summary>Returns true on success, false on error</summary>
 		public async Task<bool> FacebookPost(string message)
 		{
+			if (!_isLoggedIn)
+				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
+
 			JObject jmessage = JObject.Parse(await Web.POST(HitBoxEndpoint.FacebookPost + "?authToken=" + _authOrAccessToken + "&user_name=" + User.Username, new JsonObject()
 			{
 				{ "user_name", JsonValue.CreateStringValue(User.Username) },
@@ -304,6 +330,9 @@ namespace HitboxUWP8
 		/// <summary>False if user is already following channel</summary>
 		public async Task<bool> Follow(string usernameOrUserID)
 		{
+			if (!_isLoggedIn)
+				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
+
 			JObject jmessage = JObject.Parse(await Web.POST(HitBoxEndpoint.Follow + "?authToken=" + _authOrAccessToken, new JsonObject()
 			{
 				{ "type", JsonValue.CreateStringValue("user") },
@@ -319,6 +348,9 @@ namespace HitboxUWP8
 		/// <summary>Unfollow a user</summary>
 		public async Task<bool> Unfollow(int userID)
 		{
+			if (!_isLoggedIn)
+				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
+
 			JObject jmessage = JObject.Parse(await Web.DELETE(HitBoxEndpoint.Follow + "?type=user&authToken=" + _authOrAccessToken + "&follow_id=" + userID));
 
 			if (!jmessage["error"].IsNull())
@@ -330,15 +362,21 @@ namespace HitboxUWP8
 		/// <summary>If subscriber returns true</summary>
 		public async Task<bool> CheckSubscriptionStatus(string channel)
 		{
-			string response = await Web.GET(HitBoxEndpoint.Subscription + channel + "/" + _authOrAccessToken);
+			if (!_isLoggedIn)
+				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
 
-			return JObject.Parse(response)["isSubscriber"].ToObject<bool>();
+			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Subscription + channel + "/" + _authOrAccessToken));
+
+			return jmessage["isSubscriber"].ToObject<bool>();
 		}
 
 		/// <summary>Returns Total Media Views for :channel</summary>
-		public async Task<int> GetTotalViews(string channel)
+		public static async Task<int> GetTotalViews(string channel)
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.TotalViews + channel));
+
+			if (jmessage["total_live_views"].ToString() == "false")
+				return 0;
 
 			return jmessage["total_live_views"].ToObject<int>();
 		}
@@ -348,7 +386,7 @@ namespace HitboxUWP8
 		{
 			List<HitBoxGame> games = new List<HitBoxGame>();
 
-			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Games + (searchQuery == null ? "" : "&q=" + searchQuery)));
+			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Games + "?liveonly=true&limit=100" + (searchQuery == null ? "" : "&q=" + searchQuery)));
 			
 			foreach (JObject jgame in jmessage["categories"])
 			{
@@ -458,9 +496,12 @@ namespace HitboxUWP8
 		}
 
 		/// <summary>Returns media status and viewer count for channel</summary>
-		public async Task<HitBoxMediaStatus> MediaStatus(string channel)
+		public static async Task<HitBoxMediaStatus> MediaStatus(string channel)
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.MediaStatus + channel));
+
+			if (jmessage["media_is_live"] == null)
+				return null;
 
 			return new HitBoxMediaStatus
 			{
@@ -472,9 +513,19 @@ namespace HitboxUWP8
 		/// <summary>Returns a random chat server</summary>
 		public static async Task<string> GetChatServer()
 		{
-			JArray servers = JArray.Parse(await Web.GET(HitBoxEndpoint.ChatServers));
+			string response = await Web.GET(HitBoxEndpoint.ChatServers);
+			
+			try
+			{
+				JArray servers = JArray.Parse(response);
+				return servers[new Random().Next(0, servers.Count - 1)]["server_ip"].ToString();
+			}
+			catch(Newtonsoft.Json.JsonReaderException) // Because hitbox api sometimes returns html instead of json
+			{
 
-			return servers[new Random().Next(0, servers.Count - 1)]["server_ip"].ToString();
+				await Task.Delay(100);
+				return await GetChatServer();
+			}
 		}
 
 		/// <summary>Returns a chat server id</summary>
