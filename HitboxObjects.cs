@@ -19,6 +19,14 @@ namespace HitboxUWP8
 		public string CoverUrl	{ get; set; }
 	}
 
+	public class HitBoxChannel
+	{
+		public int Videos		{ get; set; }
+		public int Recordings	{ get; set; }
+		public int Teams		{ get; set; }
+		public HitBoxUser User	{ get; set; }
+	}
+
 	public class HitBoxFollower
 	{
 		public int		UserID	  { get; set; }
@@ -54,15 +62,23 @@ namespace HitboxUWP8
 
 	public class HitBoxVideo
 	{
-		public int		ID			{ get; set; }
-		public string	Title		{ get; set; }
-		public string	Description	{ get; set; }
-		public DateTime DateAdded	{ get; set; }
-		public string   Duration	{ get; set; }
-		public int		Views		{ get; set; }
-		public string	CoverUrl	{ get; set; }
-		public HitBoxUser User		{ get; set; }
-		public HitBoxGame Game		{ get; set; }
+		public int		ID			 { get; set; }
+		public string	Title		 { get; set; }
+		public string	Description	 { get; set; }
+		public DateTime DateAdded	 { get; set; }
+		public string   Duration	 { get; set; }
+		public int		Views		 { get; set; }
+		public string	ThumbnailUrl	 { get; set; }
+		public HitBoxChannel Channel { get; set; }
+		public HitBoxGame Game		 { get; set; }
+		public IList<HitBoxMediaProfile> Profiles { get; set; }
+	}
+
+	public class HitBoxMediaProfile
+	{
+		public string Url  { get; set; }
+		public int Height  { get; set; }
+		public int Bitrate { get; set; }
 	}
 
 	public class HitBoxAccessLevels

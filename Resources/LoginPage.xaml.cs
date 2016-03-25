@@ -22,7 +22,7 @@ namespace HitboxUWP8
 			bool forceLogin = (bool)parameters[0];
 			_client = (HitBoxClient)parameters[1];
 
-			browser.Source = new Uri(HitBoxEndpoint.Login + "?" + (forceLogin ? "force_auth=true&" : "") + "app_token=" + _client.AppKey, UriKind.Absolute);
+			browser.Source = new Uri(HitBoxEndpoint.Login + "?" + (forceLogin ? "force_auth=true&" : "") + "app_token=" + _client._key, UriKind.Absolute);
 		}
 
 		private async void browser_LoadCompleted(object sender, NavigationEventArgs args)
@@ -43,7 +43,7 @@ namespace HitboxUWP8
 			{
 				_client._authOrAccessToken = await _client.GetAccessToken(url.Substring(15));
 
-				_client.User = await _client.GetUser(await HitBoxClient.GetUserFromToken(_client._authOrAccessToken), true);
+				_client.User = await _client.GetUser(await _client.GetUserFromToken(_client._authOrAccessToken), true);
 
 				_client.OnLoggedIn(new LoginEventArgs() { Token = _client._authOrAccessToken, State = LoginEventArgs.States.OK, Method = LoginEventArgs.Methods.FirstLogin });
 
@@ -55,7 +55,7 @@ namespace HitboxUWP8
 			{
 				_client._authOrAccessToken = url.Substring(11);
 
-				_client.User = await _client.GetUser(await HitBoxClient.GetUserFromToken(_client._authOrAccessToken), true);
+				_client.User = await _client.GetUser(await _client.GetUserFromToken(_client._authOrAccessToken), true);
 
 				_client.OnLoggedIn(new LoginEventArgs() { Token = _client._authOrAccessToken, State = LoginEventArgs.States.OK, Method = LoginEventArgs.Methods.FirstLogin });
 
