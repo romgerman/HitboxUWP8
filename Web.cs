@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,14 +16,22 @@ namespace HitboxUWP8
 			try
 			{
 				using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
-				using (StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
-					return reader.ReadToEnd();
+				{
+					using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
+					{
+						return reader.ReadToEnd();
+					}
+				}
 			}
 			catch (WebException e)
 			{
 				using (HttpWebResponse response = (HttpWebResponse)e.Response)
-				using (StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
-					return reader.ReadToEnd();
+				{
+					using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
+					{
+						return reader.ReadToEnd();
+					}
+				}
 			}
 		}
 
@@ -34,14 +43,22 @@ namespace HitboxUWP8
 			try
 			{
 				using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
-				using (StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
-					return reader.ReadToEnd();
+				{
+					using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
+					{
+						return reader.ReadToEnd();
+					}
+				}
 			}
 			catch (WebException e)
 			{
 				using (HttpWebResponse response = (HttpWebResponse)e.Response)
-				using (StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
-					return reader.ReadToEnd();
+				{
+					using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
+					{
+						return reader.ReadToEnd();
+					}
+				}
 			}
 		}
 
@@ -60,15 +77,40 @@ namespace HitboxUWP8
 			try
 			{
 				using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
-				using (StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
-					return reader.ReadToEnd();
+				{
+					using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
+					{
+						return reader.ReadToEnd();
+					}
+				}
 			}
 			catch (WebException e)
 			{
-				using (HttpWebResponse errorResponse = (HttpWebResponse)e.Response)
-				using (StreamReader reader = new StreamReader(errorResponse.GetResponseStream(), Encoding.UTF8))
-					return reader.ReadToEnd();
+				using (HttpWebResponse response = (HttpWebResponse)e.Response)
+				{
+					using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
+					{
+						return reader.ReadToEnd();
+					}
+				}
 			}
+		}
+
+		private static Stream CheckForCompression(HttpWebResponse response)
+		{
+			Stream responseStream = response.GetResponseStream();
+
+			string encoding = response.Headers["Content-Encoding"];
+
+			if (encoding != null)
+			{
+				if (encoding.Equals("gzip"))
+					responseStream = new GZipStream(responseStream, CompressionMode.Decompress);
+				else if (encoding.Equals("deflate"))
+					responseStream = new DeflateStream(responseStream, CompressionMode.Decompress);
+			}
+
+			return responseStream;
 		}
 	}
 }

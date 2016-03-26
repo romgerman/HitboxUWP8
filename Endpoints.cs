@@ -32,6 +32,7 @@
 		public const string Follow			= Api + "follow";
 
 		public const string ChatServers		= Api + "chat/servers";
+		public const string ViewerServers	= Api + "player/server";
 
 		/// <summary>Replace {url} with server url</summary>
 		internal const string LivestreamViewer = "ws://{url}/viewer";

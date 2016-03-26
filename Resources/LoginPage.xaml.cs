@@ -32,10 +32,12 @@ namespace HitboxUWP8
 
 			if (url.StartsWith("?error=", StringComparison.CurrentCultureIgnoreCase))
 			{
-				if (url.Substring(7) == "user_canceled")
-					_client.OnLoggedIn(new LoginEventArgs() { State = LoginEventArgs.States.Cancelled });
+				string error = url.Substring(7);
 
-				_client.OnLoggedIn(new LoginEventArgs() { Error = url.Substring(7), State = LoginEventArgs.States.Error, Method = LoginEventArgs.Methods.FirstLogin });
+				if (error.Equals("user_canceled", StringComparison.CurrentCultureIgnoreCase))
+					_client.OnLoggedIn(new LoginEventArgs() { Error = error, State = LoginEventArgs.States.Cancelled });
+
+				_client.OnLoggedIn(new LoginEventArgs() { Error = error, State = LoginEventArgs.States.Error, Method = LoginEventArgs.Methods.FirstLogin });
 
 				isDone = true;
 			}
@@ -67,7 +69,6 @@ namespace HitboxUWP8
 			if (isDone)
 			{
 				Frame.GoBack();
-				//Frame.BackStack.RemoveAt(Frame.BackStack.Count - 1);
 			}
 		}
 
