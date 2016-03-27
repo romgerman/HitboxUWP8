@@ -18,8 +18,32 @@ Only several methods are static
 
 
 ### Now supporting
-* Base api methods (login, video/livestream get/list)
+##### REST
+| Name                      | Methods      |
+|---------------------------|--------------|
+| User                      | GET          |
+| User Access Levels        | GET          |
+| Stream Key                | GET          |
+| Twitter/Facebook Post     | POST         |
+| Video                     | GET/GET list |
+| List of Followers         | GET          |
+| List of Following         | GET          |
+| Follow/Unfollow           | POST/DELETE  |
+| Check Following Status    | GET          |
+| Check Subscription Status | GET          |
+| Media Status              | GET          |
+| Total Channel Views       | GET          |
+| Game                      | GET/GET list |
+| Run Commercial Break      | POST         |
+| Get Last Commercial Break | GET          |
+
+##### WebSockets
+* LivestreamViewer (alpha)
+
 
 ### Soon
-* LivestreamViewer
 * Chat
+
+#### Additional dependencies
+* Newtonsoft.Json
+* Microsoft.Bcl.Compression

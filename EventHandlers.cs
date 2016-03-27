@@ -15,8 +15,7 @@ namespace HitboxUWP8
 
 	public class ViewerStatusChangedArgs : EventArgs
 	{
-		public int CurrentViewers { get; set; }
-		public bool IsOnline	  { get; set; }
+		public HitBoxMediaStatus Status { get; set; }
 	}
 
 	// Exceptions

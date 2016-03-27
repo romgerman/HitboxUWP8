@@ -22,6 +22,7 @@ namespace HitboxUWP8
 		/// <summary>Logged in user</summary>
 		public HitBoxUser User { get; set; }
 		
+		public bool EnableFast { get; set; } // TODO: fast
 		public bool IsLoggedIn { get { return _isLoggedIn; } }
 
 		internal bool _isLoggedIn;
@@ -30,14 +31,6 @@ namespace HitboxUWP8
 
 		internal string _key;
 		private string  _secret;
-
-		public static class ChatServerInfo
-		{
-			public static string ServerIP;
-			public static string SocketID;
-		}
-
-		private HitBoxLivestreamViewer _viewer; // TODO: ???
 
 		/// <summary>Initializes class with application key and secret</summary>
 		public HitBoxClientBase(string key, string secret)
@@ -106,7 +99,7 @@ namespace HitboxUWP8
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.UserFromToken + token));
 
-			return (jmessage["user_name"].IsNull() ? null : jmessage["user_name"].ToString());
+			return (jmessage["user_name"] == null ? null : jmessage["user_name"].ToString());
 		}
 
 		/// <summary>Returns user's stream key. Returns null on error</summary>
@@ -117,7 +110,7 @@ namespace HitboxUWP8
 
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.StreamKey + User.Username + "?authToken=" + _authOrAccessToken));
 
-			if (!jmessage["error"].IsNull())
+			if (jmessage["error"] != null)
 				return null;
 
 			return User.Username + "?key=" + jmessage["streamKey"].ToString();
@@ -131,7 +124,7 @@ namespace HitboxUWP8
 
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.AccessLevels + channel + "/" + _authOrAccessToken));
 
-			if (jmessage["user_id"].IsNull())
+			if (jmessage["user_id"] == null)
 				return new HitBoxAccessLevels()
 				{
 					IsFollower   = jmessage["isFollower"].ToObject<bool>(),
@@ -142,20 +135,20 @@ namespace HitboxUWP8
 			{
 				UserID			= jmessage["user_id"].ToObject<int>(),
 				AccessUserID	= jmessage["access_user_id"].ToObject<int>(),
-				Settings		= jmessage["settings"].ToString() == "admin" ? HitBoxAccessLevels.AccessLevel.Admin : HitBoxAccessLevels.AccessLevel.Anon,
-				Account			= jmessage["account"].ToString() == "admin" ? HitBoxAccessLevels.AccessLevel.Admin : HitBoxAccessLevels.AccessLevel.Anon,
-				Livestreams		= jmessage["livestreams"].ToString() == "admin" ? HitBoxAccessLevels.AccessLevel.Admin : HitBoxAccessLevels.AccessLevel.Anon,
-				Broadcast		= jmessage["broadcast"].ToString() == "admin" ? HitBoxAccessLevels.AccessLevel.Admin : HitBoxAccessLevels.AccessLevel.Anon,
-				Videos			= jmessage["videos"].ToString() == "admin" ? HitBoxAccessLevels.AccessLevel.Admin : HitBoxAccessLevels.AccessLevel.Anon,
-				Recordings		= jmessage["recordings"].ToString() == "admin" ? HitBoxAccessLevels.AccessLevel.Admin : HitBoxAccessLevels.AccessLevel.Anon,
-				Statistics		= jmessage["statistics"].ToString() == "admin" ? HitBoxAccessLevels.AccessLevel.Admin : HitBoxAccessLevels.AccessLevel.Anon,
-				Inbox			= jmessage["inbox"].ToString() == "admin" ? HitBoxAccessLevels.AccessLevel.Admin : HitBoxAccessLevels.AccessLevel.Anon,
-				Revenues		= jmessage["revenues"].ToString() == "admin" ? HitBoxAccessLevels.AccessLevel.Admin : HitBoxAccessLevels.AccessLevel.Anon,
-				Chat			= jmessage["chat"].ToString() == "admin" ? HitBoxAccessLevels.AccessLevel.Admin : HitBoxAccessLevels.AccessLevel.Anon,
-				Following		= jmessage["following"].ToString() == "admin" ? HitBoxAccessLevels.AccessLevel.Admin : HitBoxAccessLevels.AccessLevel.Anon,
-				Teams			= jmessage["teams"].ToString() == "admin" ? HitBoxAccessLevels.AccessLevel.Admin : HitBoxAccessLevels.AccessLevel.Anon,
-				Subscriptions	= jmessage["subscriptions"].ToString() == "admin" ? HitBoxAccessLevels.AccessLevel.Admin : HitBoxAccessLevels.AccessLevel.Anon,
-				Payments		= jmessage["payments"].ToString() == "admin" ? HitBoxAccessLevels.AccessLevel.Admin : HitBoxAccessLevels.AccessLevel.Anon,
+				Settings		= jmessage["settings"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
+				Account			= jmessage["account"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
+				Livestreams		= jmessage["livestreams"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
+				Broadcast		= jmessage["broadcast"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
+				Videos			= jmessage["videos"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
+				Recordings		= jmessage["recordings"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
+				Statistics		= jmessage["statistics"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
+				Inbox			= jmessage["inbox"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
+				Revenues		= jmessage["revenues"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
+				Chat			= jmessage["chat"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
+				Following		= jmessage["following"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
+				Teams			= jmessage["teams"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
+				Subscriptions	= jmessage["subscriptions"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
+				Payments		= jmessage["payments"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
 				IsFollower		= jmessage["isFollower"].ToObject<bool>(),
 				IsSubscriber	= jmessage["isSubscriber"].ToObject<bool>()
 			};
@@ -173,7 +166,7 @@ namespace HitboxUWP8
 				{ "authToken", JsonValue.CreateStringValue(_authOrAccessToken) }
 			}.Stringify()));
 
-			if (!jmessage["error"].IsNull())
+			if (jmessage["error"] != null)
 				return;
 
 			/*
@@ -221,7 +214,7 @@ namespace HitboxUWP8
 				{ "message",   JsonValue.CreateStringValue(message) }
 			}.Stringify()));
 
-			if (!jmessage["error"].IsNull())
+			if (jmessage["error"] != null)
 				return false;
 
 			return true;
@@ -240,7 +233,7 @@ namespace HitboxUWP8
 				{ "message",   JsonValue.CreateStringValue(message) }
 			}.Stringify()));
 
-			if (!jmessage["error"].IsNull())
+			if (jmessage["error"] != null)
 				return false;
 
 			return true;
@@ -251,7 +244,7 @@ namespace HitboxUWP8
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.User + username + (!useToken ? "" : "?authToken=" + _authOrAccessToken)));
 
-			if (jmessage["user_name"].IsNull())
+			if (jmessage["user_name"] == null)
 				return null;
 
 			return new HitBoxUser()
@@ -259,14 +252,14 @@ namespace HitboxUWP8
 				Username		= jmessage["user_name"].ToString(),
 				CoverUrl		= jmessage["user_cover"].ToString(),
 				AvatarUrl		= jmessage["user_logo_small"].ToString(),
-				IsBroadcaster	= jmessage["user_is_broadcaster"].IsNull() ? false : jmessage["user_is_broadcaster"].ToObject<bool>(),
+				IsBroadcaster	= jmessage["user_is_broadcaster"] == null ? false : jmessage["user_is_broadcaster"].ToObject<bool>(),
 				Followers		= jmessage["followers"].ToObject<int>(),
 				ID				= jmessage["user_id"].ToObject<int>(),
-				MediaID			= jmessage["user_media_id"].IsNull() ? 0 : jmessage["user_media_id"].ToObject<int>(),
-				IsLive			= !jmessage["is_live"].IsNull() ? (jmessage["is_live"].ToString() == "0" ? false : true) : (jmessage["media_is_live"].ToString() == "0" ? false : true),
-				LiveSince		= !jmessage["live_since"].IsNull() ? DateTime.Parse(jmessage["live_since"].ToString()) : DateTime.Parse(jmessage["media_live_since"].ToString()),
-				Twitter			= jmessage["twitter_account"].IsNull() ? null : jmessage["twitter_account"].ToString(),
-				Email			= jmessage["user_email"].IsNull() ? null : jmessage["user_email"].ToString()
+				MediaID			= jmessage["user_media_id"] == null ? 0 : jmessage["user_media_id"].ToObject<int>(),
+				IsLive			= jmessage["is_live"] != null ? (jmessage["is_live"].ToString() == "0" ? false : true) : (jmessage["media_is_live"].ToString() == "0" ? false : true),
+				LiveSince		= jmessage["live_since"] != null ? DateTime.Parse(jmessage["live_since"].ToString()) : DateTime.Parse(jmessage["media_live_since"].ToString()),
+				Twitter			= jmessage["twitter_account"] == null ? null : jmessage["twitter_account"].ToString(),
+				Email			= jmessage["user_email"] == null ? null : jmessage["user_email"].ToString()
 			};
 		}
 
@@ -277,7 +270,7 @@ namespace HitboxUWP8
 
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Followers + channel + "?offset=" + offset + "&limit=" + limit));
 
-			if (!jmessage["error"].IsNull())
+			if (jmessage["error"] != null)
 				return null;
 
 			foreach(JObject jfollower in jmessage["followers"])
@@ -302,7 +295,7 @@ namespace HitboxUWP8
 
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Following + "?user_name=" + user + "&offset=" + offset + "&limit=" + limit));
 
-			if (!jmessage["error"].IsNull())
+			if (jmessage["error"] != null)
 				return null;
 
 			foreach (JObject jfollower in jmessage["following"])
@@ -325,7 +318,7 @@ namespace HitboxUWP8
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Following + channel + "?user_name=" + user));
 
-			if (!jmessage["error"].IsNull())
+			if (jmessage["error"] != null)
 				return false;
 
 			return true;
@@ -357,7 +350,7 @@ namespace HitboxUWP8
 
 			JObject jmessage = JObject.Parse(await Web.DELETE(HitBoxEndpoint.Follow + "?type=user&authToken=" + _authOrAccessToken + "&follow_id=" + userID));
 
-			if (!jmessage["error"].IsNull())
+			if (jmessage["error"] != null)
 				return false;
 
 			return true;
@@ -413,7 +406,7 @@ namespace HitboxUWP8
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Game + id));
 
-			if (jmessage["category"].IsNull())
+			if (jmessage["category"] == null)
 				return null;
 
 			return new HitBoxGame()
@@ -429,26 +422,28 @@ namespace HitboxUWP8
 		/// <summary>Returns null if no videos was found</summary>
 		public static async Task<IList<HitBoxVideo>> GetVideos(int gameID = 0, int start = 0, int limit = 10, bool weekly = true)
 		{
-			List<HitBoxVideo> videos = new List<HitBoxVideo>();
+			List<HitBoxVideo> videos = new List<HitBoxVideo>(limit);
 
-			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Videos + "?fast=true&filter=" + (weekly ? "weekly" : "popular") + "&game=" + gameID + "&start=" + start + "&limit=" + limit));
+			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Videos + "?filter=" + (weekly ? "weekly" : "popular") + "&game=" + gameID + "&start=" + start + "&limit=" + limit));
 
-			if (!jmessage["error"].IsNull())
+			if (jmessage["error"] != null)
 				return null;
 
-			foreach(JObject jvideo in jmessage["video"])
-			{
-				IList<HitBoxMediaProfile> profiles = new List<HitBoxMediaProfile>();
+			IList<HitBoxMediaProfile> profiles = null;
 
+			foreach (JObject jvideo in jmessage["video"])
+			{
 				JArray jprofiles = JArray.Parse(System.Text.RegularExpressions.Regex.Unescape(jvideo["media_profiles"].ToString()));
 
-				for (int i = 0; i < jprofiles.Count; i++)
+				profiles = new List<HitBoxMediaProfile>(jprofiles.Count);
+
+				foreach (JToken jprofile in jprofiles)
 				{
 					profiles.Add(new HitBoxMediaProfile
 					{
-						Url = jprofiles[i]["url"].ToString(),
-						Height = jprofiles[i]["height"].ToObject<int>(),
-						Bitrate = jprofiles[i]["bitrate"].ToObject<int>()
+						Url		= jprofile["url"].ToString(),
+						Height	= jprofile["height"].ToObject<int>(),
+						Bitrate = jprofile["bitrate"].ToObject<int>()
 					});
 				}
 
@@ -456,16 +451,17 @@ namespace HitboxUWP8
 				{
 					ID			 = jvideo["media_id"].ToObject<int>(),
 					Title		 = jvideo["media_title"].ToString(),
+					Views		 = jvideo["media_views"].ToObject<int>(),
 					Description  = jvideo["media_description"].ToString(),
 					DateAdded	 = DateTime.Parse(jvideo["media_date_added"].ToString()),
 					Duration	 = jvideo["media_duration_format"].ToString(),
-					Views		 = jvideo["media_views"].ToObject<int>(),
 					ThumbnailUrl = jvideo["media_thumbnail"].ToString(),
+					MediaFile	 = jvideo["media_file"].ToString(),
 					Profiles	 = profiles,
 					Game = new HitBoxGame
 					{
-						Name		 = jvideo["category_name"].ToString(),
 						ID			 = jvideo["category_id"].ToString() == "" ? 0 : jvideo["category_id"].ToObject<int>(),
+						Name		 = jvideo["category_name"].ToString(),
 						Viewers		 = jvideo["category_viewers"].ToString() == "" ? 0 : jvideo["category_viewers"].ToObject<int>(),
 						ChannelCount = jvideo["category_channels"].ToString() == "" ? 0 : jvideo["category_channels"].ToObject<int>(),
 						LogoUrl		 = jvideo["category_logo_large"].ToString(),
@@ -480,12 +476,12 @@ namespace HitboxUWP8
 						{
 							ID			= jvideo["channel"]["user_id"].ToObject<int>(),
 							Username	= jvideo["channel"]["user_name"].ToString(),
-							IsLive		= jvideo["channel"]["media_is_live"].ToString() == "0" ? false : true,
-							LiveSince	= DateTime.Parse(jvideo["channel"]["media_live_since"].ToString()),
+							Followers	= jvideo["channel"]["followers"].ToObject<int>(),
 							MediaID		= jvideo["channel"]["user_media_id"].ToObject<int>(),
+							IsLive		= jvideo["channel"]["media_is_live"].ToString() == "1",
+							LiveSince	= DateTime.Parse(jvideo["channel"]["media_live_since"].ToString()),
 							AvatarUrl	= jvideo["channel"]["user_logo_small"].ToString(),
 							CoverUrl	= jvideo["channel"]["user_cover"].ToString(),
-							Followers	= jvideo["channel"]["followers"].ToObject<int>(),
 							Twitter		= jvideo["channel"]["twitter_account"].ToString()
 						}
 					}
@@ -500,7 +496,7 @@ namespace HitboxUWP8
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Video + id + (useToken ? "?authToken=" + _authOrAccessToken : "")));
 
-			if (!jmessage["error"].IsNull())
+			if (jmessage["error"] != null)
 				return null;
 
 			JToken jvideo = jmessage["video"][0];
@@ -513,8 +509,8 @@ namespace HitboxUWP8
 			{
 				profiles.Add(new HitBoxMediaProfile
 				{
-					Url = jprofiles[i]["url"].ToString(),
-					Height = jprofiles[i]["height"].ToObject<int>(),
+					Url		= jprofiles[i]["url"].ToString(),
+					Height	= jprofiles[i]["height"].ToObject<int>(),
 					Bitrate = jprofiles[i]["bitrate"].ToObject<int>()
 				});
 			}
@@ -528,6 +524,7 @@ namespace HitboxUWP8
 				Duration	 = jvideo["media_duration_format"].ToString(),
 				Views		 = jvideo["media_views"].ToObject<int>(),
 				ThumbnailUrl = jvideo["media_thumbnail"].ToString(),
+				MediaFile	 = jvideo["media_file"].ToString(),
 				Profiles	 = profiles,
 				Game = new HitBoxGame
 				{
@@ -547,7 +544,7 @@ namespace HitboxUWP8
 					{
 						ID			= jvideo["channel"]["user_id"].ToObject<int>(),
 						Username	= jvideo["channel"]["user_name"].ToString(),
-						IsLive		= jvideo["channel"]["media_is_live"].ToString() == "0" ? false : true,
+						IsLive		= jvideo["channel"]["media_is_live"].ToString() == "1",
 						LiveSince	= DateTime.Parse(jvideo["channel"]["media_live_since"].ToString()),
 						MediaID		= jvideo["channel"]["user_media_id"].ToObject<int>(),
 						AvatarUrl	= jvideo["channel"]["user_logo_small"].ToString(),
@@ -570,30 +567,74 @@ namespace HitboxUWP8
 		}
 
 		/// <summary>Returns null if no livestreams was found</summary>
-		// TODO: THIS
-		public async Task<List<HitBoxLivestream>> GetLivestreams(int gameID = 0, int start = 0, int limit = 10, bool useToken = false)
+		public async Task<IList<HitBoxLivestream>> GetLivestreams(int gameID = 0, int start = 0, int limit = 10, bool liveonly = true, bool useToken = false)
 		{
-			List<HitBoxLivestream> livestreams = new List<HitBoxLivestream>();
+			IList<HitBoxLivestream> livestreams = new List<HitBoxLivestream>(limit);
 
-			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Livestreams + "?fast=true&liveonly=true&game=" + gameID + "&start=" + start + "&limit=" + limit));
+			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Livestreams + "?liveonly=" + (liveonly ? "true" : "false") + "&game=" + gameID + "&start=" + start + "&limit=" + limit));
 
-			if (!jmessage["error"].IsNull())
+			if (jmessage["error"] != null)
 				return null;
+
+			IList<HitBoxMediaProfile> profiles = null;
 
 			foreach (JObject jlive in jmessage["livestream"])
 			{
+				if (jlive["media_profiles"].HasValues)
+				{
+					JArray jprofiles = JArray.Parse(System.Text.RegularExpressions.Regex.Unescape(jlive["media_profiles"].ToString()));
+
+					profiles = new List<HitBoxMediaProfile>(jprofiles.Count);
+
+					foreach (JToken jprofile in jprofiles)
+					{
+						profiles.Add(new HitBoxMediaProfile
+						{
+							Url		= jprofile["url"].ToString(),
+							Height	= jprofile["height"].ToObject<int>(),
+							Bitrate = jprofile["bitrate"].ToObject<int>()
+						});
+					}
+				}
+
 				livestreams.Add(new HitBoxLivestream()
 				{
-					Username = jlive["media_name"].ToString(),
-					UsernameDisplay = jlive["media_display_name"].ToString(),
-					Title = jlive["media_status"].ToString(),
-					Game = jlive["category_name"].ToString(),
-					Viewers = jlive["media_views"].ToObject<int>(),
-					Countries = jlive["media_countries"].ToObject<List<string>>(),
-					LiveSince = DateTime.Parse(jlive["media_live_since"].ToString()),
-					AvatarUrl = jlive["user_logo_small"].ToString(),
-					ID = jlive["media_id"].ToObject<int>(),
-					CoverUrl = jlive["media_thumbnail"].ToString()
+					ID				= jlive["media_id"].ToObject<int>(),
+					Title			= jlive["media_status"].ToString(),
+					Viewers			= jlive["media_views"].ToObject<int>(),
+					MediaFile		= jlive["media_file"].ToString(),
+					Profiles		= profiles,
+					IsLive			= jlive["media_is_live"].ToString() == "1",
+					IsChatEnabled	= jlive["media_chat_enabled"].ToString() == "1",
+					Countries		= jlive["media_countries"].HasValues ? jlive["media_countries"].ToObject<List<string>>() : null,
+					Game = new HitBoxGame
+					{
+						ID				= jlive["category_id"].ToString() == "" ? 0 : jlive["category_id"].ToObject<int>(),
+						Name			= jlive["category_name"].ToString(),
+						Viewers			= jlive["category_viewers"].ToString() == "" ? 0 : jlive["category_viewers"].ToObject<int>(),
+						ChannelCount	= jlive["category_channels"].ToString() == "" ? 0 : jlive["category_channels"].ToObject<int>(),
+						LogoUrl			= jlive["category_logo_large"].ToString(),
+						SeoKey			= jlive["category_seo_key"].ToString()
+					},
+					ThumbnailUrl = jlive["media_thumbnail"].ToString(),
+					Channel = new HitBoxChannel
+					{
+						Recordings	= jlive["channel"]["recordings"].ToObject<int>(),
+						Videos		= jlive["channel"]["videos"].ToObject<int>(),
+						Teams		= jlive["channel"]["teams"].ToObject<int>(),
+						User = new HitBoxUser
+						{
+							ID			= jlive["channel"]["user_id"].ToObject<int>(),
+							Username	= jlive["channel"]["user_name"].ToString(),
+							Followers	= jlive["channel"]["followers"].ToObject<int>(),
+							MediaID		= jlive["channel"]["user_media_id"].ToObject<int>(),
+							IsLive		= jlive["channel"]["media_is_live"].ToString() == "1",
+							AvatarUrl	= jlive["channel"]["user_logo_small"].ToString(),
+							CoverUrl	= jlive["channel"]["user_cover"].ToString(),
+							LiveSince	= DateTime.Parse(jlive["channel"]["media_live_since"].ToString()),
+							Twitter		= jlive["channel"]["twitter_account"].ToString()
+						}
+					}
 				});
 			}
 
@@ -621,22 +662,34 @@ namespace HitboxUWP8
 			};
 		}
 
-		/// <summary>Returns a random chat server</summary>
-		public static async Task<string> GetChatServers()
+		/// <summary>Returns chat servers</summary>
+		public static async Task<IList<string>> GetChatServers()
 		{
-			string response = await Web.GET(HitBoxEndpoint.ChatServers);
-			
-			JArray servers = JArray.Parse(response);
-			return servers[new Random().Next(0, servers.Count - 1)]["server_ip"].ToString();
+			JArray jmessage = JArray.Parse(await Web.GET(HitBoxEndpoint.ChatServers));
+
+			IList<string> servers = new List<string>();
+
+			foreach(JToken jserver in jmessage)
+			{
+				servers.Add(jserver["server_ip"].ToString());
+			}
+
+			return servers;
 		}
 
-		/// <summary>Returns a random server for "viewer"</summary>
-		public static async Task<string> GetViewerServers()
+		/// <summary>Returns servers for "viewer"</summary>
+		public static async Task<IList<string>> GetViewerServers()
 		{
-			string response = await Web.GET(HitBoxEndpoint.ViewerServers);
+			JArray jmessage = JArray.Parse(await Web.GET(HitBoxEndpoint.ViewerServers));
 
-			JArray servers = JArray.Parse(response);
-			return servers[new Random().Next(0, servers.Count - 1)]["server_ip"].ToString();
+			IList<string> servers = new List<string>();
+
+			foreach (JToken jserver in jmessage)
+			{
+				servers.Add(jserver["server_ip"].ToString());
+			}
+
+			return servers;
 		}
 
 		/// <summary>Returns a chat server id</summary>

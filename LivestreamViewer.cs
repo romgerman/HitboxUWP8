@@ -96,7 +96,14 @@ namespace HitboxUWP8
 							{
 								_currentViewerCount = viewers;
 								_isOnline = online;
-								OnStatusChanged(new ViewerStatusChangedArgs { CurrentViewers = viewers, IsOnline = online });
+								OnStatusChanged(new ViewerStatusChangedArgs
+								{
+									Status = new HitBoxMediaStatus
+									{
+										IsLive = online,
+										Viewers = viewers
+									}
+								});
 							}
 						}
 						break;

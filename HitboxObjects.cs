@@ -46,32 +46,31 @@ namespace HitboxUWP8
 		public string LogoUrl	{ get; set; }
 	}
 
-	public class HitBoxLivestream
+	public class HitBoxMedia
 	{
-		public int	  ID			   { get; set; }
-		public string Title			   { get; set; }
-		public string Username		   { get; set; }
-		public string UsernameDisplay  { get; set; }
-		public string Game			   { get; set; }
-		public int	  Viewers		   { get; set; }
-		public List<string> Countries  { get; set; }
-		public DateTime     LiveSince  { get; set; }
-		public string		AvatarUrl  { get; set; }
-		public string		CoverUrl   { get; set; }
+		public int	  ID			 { get; set; }
+		public string Title			 { get; set; }
+		public string MediaFile		 { get; set; }
+		public string ThumbnailUrl   { get; set; }
+		public HitBoxChannel Channel { get; set; }
+		public HitBoxGame	 Game	 { get; set; }
+		public IList<HitBoxMediaProfile> Profiles { get; set; }
 	}
 
-	public class HitBoxVideo
+	public class HitBoxLivestream : HitBoxMedia
 	{
-		public int		ID			 { get; set; }
-		public string	Title		 { get; set; }
-		public string	Description	 { get; set; }
-		public DateTime DateAdded	 { get; set; }
-		public string   Duration	 { get; set; }
-		public int		Views		 { get; set; }
-		public string	ThumbnailUrl	 { get; set; }
-		public HitBoxChannel Channel { get; set; }
-		public HitBoxGame Game		 { get; set; }
-		public IList<HitBoxMediaProfile> Profiles { get; set; }
+		public int	Viewers			  { get; set; }
+		public bool IsLive			  { get; set; }
+		public bool IsChatEnabled	  { get; set; }
+		public List<string> Countries { get; set; }
+	}
+
+	public class HitBoxVideo : HitBoxMedia
+	{
+		public string	Description	{ get; set; }
+		public DateTime DateAdded	{ get; set; }
+		public string   Duration	{ get; set; }
+		public int		Views		{ get; set; }
 	}
 
 	public class HitBoxMediaProfile
@@ -83,26 +82,26 @@ namespace HitboxUWP8
 
 	public class HitBoxAccessLevels
 	{
-		public enum AccessLevel { Anon, Admin }
+		public enum Level { Anon, Admin }
 
-		public int UserID				 { get; set; }
-		public int AccessUserID			 { get; set; }
-		public AccessLevel Settings		 { get; set; }
-		public AccessLevel Account		 { get; set; }
-		public AccessLevel Livestreams	 { get; set; }
-		public AccessLevel Broadcast	 { get; set; }
-		public AccessLevel Videos		 { get; set; }
-		public AccessLevel Recordings	 { get; set; }
-		public AccessLevel Statistics	 { get; set; }
-		public AccessLevel Inbox		 { get; set; }
-		public AccessLevel Revenues		 { get; set; }
-		public AccessLevel Chat			 { get; set; }
-		public AccessLevel Following	 { get; set; }
-		public AccessLevel Teams		 { get; set; }
-		public AccessLevel Subscriptions { get; set; }
-		public AccessLevel Payments		 { get; set; }
-		public bool IsSubscriber		 { get; set; }
-		public bool IsFollower			 { get; set; }
+		public int UserID			{ get; set; }
+		public int AccessUserID		{ get; set; }
+		public Level Settings		{ get; set; }
+		public Level Account		{ get; set; }
+		public Level Livestreams	{ get; set; }
+		public Level Broadcast		{ get; set; }
+		public Level Videos			{ get; set; }
+		public Level Recordings		{ get; set; }
+		public Level Statistics		{ get; set; }
+		public Level Inbox			{ get; set; }
+		public Level Revenues		{ get; set; }
+		public Level Chat			{ get; set; }
+		public Level Following		{ get; set; }
+		public Level Teams			{ get; set; }
+		public Level Subscriptions	{ get; set; }
+		public Level Payments		{ get; set; }
+		public bool IsSubscriber	{ get; set; }
+		public bool IsFollower		{ get; set; }
 
 		//public void Admin { get; set; }
 		//public void Superadmin { get; set; }

@@ -6,7 +6,7 @@ namespace HitboxUWP8
 {
 	public sealed partial class LoginPage : Page
 	{
-		private HitBoxClient _client;
+		private HitBoxClientBase _client;
 
 		public LoginPage()
 		{
@@ -20,7 +20,7 @@ namespace HitboxUWP8
 			object[] parameters = (object[])e.Parameter;
 
 			bool forceLogin = (bool)parameters[0];
-			_client = (HitBoxClient)parameters[1];
+			_client = (HitBoxClientBase)parameters[1];
 
 			browser.Source = new Uri(HitBoxEndpoint.Login + "?" + (forceLogin ? "force_auth=true&" : "") + "app_token=" + _client._key, UriKind.Absolute);
 		}
