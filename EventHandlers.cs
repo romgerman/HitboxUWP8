@@ -16,6 +16,18 @@ namespace HitboxUWP8
 	public class ViewerStatusChangedArgs : EventArgs
 	{
 		public HitBoxMediaStatus Status { get; set; }
+		public int Followers   { get; set; }
+		public int Subscribers { get; set; }
+	}
+
+	public class ChatLoggedInEventArgs : EventArgs
+	{
+		public HitBoxRole Role { get; set; }
+
+		public ChatLoggedInEventArgs(HitBoxRole role)
+		{
+			Role = role;
+		}
 	}
 
 	// Exceptions

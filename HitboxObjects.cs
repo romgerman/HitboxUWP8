@@ -80,32 +80,49 @@ namespace HitboxUWP8
 		public int Bitrate { get; set; }
 	}
 
+	public enum HitBoxRole
+	{
+		/// <summary>"You are a unregistered user. You cannot write in chat and any messages you send will be dropped. User list is also disallowed"</summary>
+		Guest,
+		/// <summary>"You are a normal viewer. You can write and see the user list. Strict messages/second limits apply. Duplicate messages are disallowed"</summary>
+		Anon,
+		/// <summary>"You are a moderator. You can kick/ban other users, set slow and sub mode but cannot IP ban a user"</summary>
+		User,
+		/// <summary>"You have full permission in chat. You can add/remove moderators and IP ban a user"</summary>
+		Admin
+	}
+
 	public class HitBoxAccessLevels
 	{
-		public enum Level { Anon, Admin }
-
-		public int UserID			{ get; set; }
-		public int AccessUserID		{ get; set; }
-		public Level Settings		{ get; set; }
-		public Level Account		{ get; set; }
-		public Level Livestreams	{ get; set; }
-		public Level Broadcast		{ get; set; }
-		public Level Videos			{ get; set; }
-		public Level Recordings		{ get; set; }
-		public Level Statistics		{ get; set; }
-		public Level Inbox			{ get; set; }
-		public Level Revenues		{ get; set; }
-		public Level Chat			{ get; set; }
-		public Level Following		{ get; set; }
-		public Level Teams			{ get; set; }
-		public Level Subscriptions	{ get; set; }
-		public Level Payments		{ get; set; }
-		public bool IsSubscriber	{ get; set; }
-		public bool IsFollower		{ get; set; }
+		public int UserID				{ get; set; }
+		public int AccessUserID			{ get; set; }
+		public HitBoxRole Settings		{ get; set; }
+		public HitBoxRole Account		{ get; set; }
+		public HitBoxRole Livestreams	{ get; set; }
+		public HitBoxRole Broadcast		{ get; set; }
+		public HitBoxRole Videos		{ get; set; }
+		public HitBoxRole Recordings	{ get; set; }
+		public HitBoxRole Statistics	{ get; set; }
+		public HitBoxRole Inbox			{ get; set; }
+		public HitBoxRole Revenues		{ get; set; }
+		public HitBoxRole Chat			{ get; set; }
+		public HitBoxRole Following		{ get; set; }
+		public HitBoxRole Teams			{ get; set; }
+		public HitBoxRole Subscriptions	{ get; set; }
+		public HitBoxRole Payments		{ get; set; }
+		public bool IsSubscriber		{ get; set; }
+		public bool IsFollower			{ get; set; }
 
 		//public void Admin { get; set; }
 		//public void Superadmin { get; set; }
 		//public void Partner { get; set; }
+	}
+
+	public class HitBoxCommBreak
+	{
+		public int		Count { get; set; }
+		public string	Delay { get; set; } // TODO: delay in CommBreak
+		public DateTime Timestamp { get; set; }
 	}
 
 	public class HitBoxLastCommBreak

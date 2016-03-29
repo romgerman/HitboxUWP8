@@ -40,10 +40,9 @@
     <Compile Include="Client.cs" />
     <Compile Include="Endpoints.cs" />
     <Compile Include="EventHandlers.cs" />
-    <Compile Include="HitBoxChat.cs" />
+    <Compile Include="Chat.cs" />
     <Compile Include="LivestreamViewer.cs" />
     <Compile Include="HitboxObjects.cs" />
-    <Compile Include="JsonHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resources\LoginPage.xaml.cs">
       <DependentUpon>LoginPage.xaml</DependentUpon>

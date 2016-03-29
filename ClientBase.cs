@@ -22,7 +22,7 @@ namespace HitboxUWP8
 		/// <summary>Logged in user</summary>
 		public HitBoxUser User { get; set; }
 		
-		public bool EnableFast { get; set; } // TODO: fast
+		public bool EnableFast { get; set; } // TODO: fast option in HitBoxClient
 		public bool IsLoggedIn { get { return _isLoggedIn; } }
 
 		internal bool _isLoggedIn;
@@ -135,27 +135,27 @@ namespace HitboxUWP8
 			{
 				UserID			= jmessage["user_id"].ToObject<int>(),
 				AccessUserID	= jmessage["access_user_id"].ToObject<int>(),
-				Settings		= jmessage["settings"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
-				Account			= jmessage["account"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
-				Livestreams		= jmessage["livestreams"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
-				Broadcast		= jmessage["broadcast"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
-				Videos			= jmessage["videos"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
-				Recordings		= jmessage["recordings"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
-				Statistics		= jmessage["statistics"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
-				Inbox			= jmessage["inbox"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
-				Revenues		= jmessage["revenues"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
-				Chat			= jmessage["chat"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
-				Following		= jmessage["following"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
-				Teams			= jmessage["teams"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
-				Subscriptions	= jmessage["subscriptions"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
-				Payments		= jmessage["payments"].ToString() == "admin" ? HitBoxAccessLevels.Level.Admin : HitBoxAccessLevels.Level.Anon,
+				Settings		= jmessage["settings"].ToString() == "admin" ? HitBoxRole.Admin : HitBoxRole.Anon,
+				Account			= jmessage["account"].ToString() == "admin" ? HitBoxRole.Admin : HitBoxRole.Anon,
+				Livestreams		= jmessage["livestreams"].ToString() == "admin" ? HitBoxRole.Admin : HitBoxRole.Anon,
+				Broadcast		= jmessage["broadcast"].ToString() == "admin" ? HitBoxRole.Admin : HitBoxRole.Anon,
+				Videos			= jmessage["videos"].ToString() == "admin" ? HitBoxRole.Admin : HitBoxRole.Anon,
+				Recordings		= jmessage["recordings"].ToString() == "admin" ? HitBoxRole.Admin : HitBoxRole.Anon,
+				Statistics		= jmessage["statistics"].ToString() == "admin" ? HitBoxRole.Admin : HitBoxRole.Anon,
+				Inbox			= jmessage["inbox"].ToString() == "admin" ? HitBoxRole.Admin : HitBoxRole.Anon,
+				Revenues		= jmessage["revenues"].ToString() == "admin" ? HitBoxRole.Admin : HitBoxRole.Anon,
+				Chat			= jmessage["chat"].ToString() == "admin" ? HitBoxRole.Admin : HitBoxRole.Anon,
+				Following		= jmessage["following"].ToString() == "admin" ? HitBoxRole.Admin : HitBoxRole.Anon,
+				Teams			= jmessage["teams"].ToString() == "admin" ? HitBoxRole.Admin : HitBoxRole.Anon,
+				Subscriptions	= jmessage["subscriptions"].ToString() == "admin" ? HitBoxRole.Admin : HitBoxRole.Anon,
+				Payments		= jmessage["payments"].ToString() == "admin" ? HitBoxRole.Admin : HitBoxRole.Anon,
 				IsFollower		= jmessage["isFollower"].ToObject<bool>(),
 				IsSubscriber	= jmessage["isSubscriber"].ToObject<bool>()
 			};
 		}
 
 		/// <summary>Editors can run it</summary>
-		public async void RunCommercialBreak(string channel, int count = 1) // TODO: THIS
+		public async Task<HitBoxCommBreak> RunCommercialBreak(string channel, int count = 1)
 		{
 			if (!_isLoggedIn)
 				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
@@ -167,22 +167,14 @@ namespace HitboxUWP8
 			}.Stringify()));
 
 			if (jmessage["error"] != null)
-				return;
+				return null;
 
-			/*
-			Response:
+			return new HitBoxCommBreak
 			{
-			  "method":"commercialBreak",
-			  "params":{
-				"channel":"masta",
-				"count":"1",
-				"delay":"0",
-				"token":"SuperSecret",
-				"url":"http://hitbox.tv",
-				"timestamp":1428528241
-			  }
-			}
-			*/
+				Count = jmessage["params"]["count"].ToObject<int>(),
+				Delay = jmessage["params"]["delay"].ToString(),
+				Timestamp = DateTime.FromFileTime(jmessage["params"]["timestamp"].ToObject<long>())
+			};
 		}
 
 		/// <summary>Returns last commecrial break on given channel. Returns null if channel never run ads</summary>
@@ -378,6 +370,17 @@ namespace HitboxUWP8
 			return jmessage["total_live_views"].ToObject<int>();
 		}
 
+		public static async Task GetProfilePanels(string channel) // TODO: profile panels
+		{
+			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.ProfilePanels + channel));
+
+			if (!jmessage["profile"].HasValues)
+				return;
+
+
+
+		}
+
 		/// <summary>Returns live games (max = 100)</summary>
 		public static async Task<IList<HitBoxGame>> GetGames(string searchQuery = null)
 		{
@@ -556,12 +559,12 @@ namespace HitboxUWP8
 			};
 		}
 
-		public async Task<bool> CreateVideo() // TODO: THIS
+		public async Task<bool> CreateVideo() // TODO: CreateVideo method
 		{
 			return false;
 		}
 
-		public void UpdateVideo() // TODO: THIS
+		public void UpdateVideo() // TODO: UpdateVideo method
 		{
 			
 		}
@@ -597,7 +600,7 @@ namespace HitboxUWP8
 					}
 				}
 
-				livestreams.Add(new HitBoxLivestream()
+				livestreams.Add(new HitBoxLivestream
 				{
 					ID				= jlive["media_id"].ToObject<int>(),
 					Title			= jlive["media_status"].ToString(),
@@ -641,10 +644,73 @@ namespace HitboxUWP8
 			return livestreams;
 		}
 
-		// TODO: THIS
-		public async Task<JsonHelper.LivestreamMediaObject> GetLivestreamMediaObject(string media_id)
+		public async Task<HitBoxLivestream> GetLivestream(string channel, bool useToken = false)
 		{
-			return JsonHelper.GetLivestreamMediaObject(await Web.GET("http://www.hitbox.tv/api/player/config/live/" + media_id + "?redis=true&authToken=" + _authOrAccessToken + "&embed=false&qos=false&showHidden=true"));
+			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Livestream + channel + (useToken ? "?authToken=" + _authOrAccessToken : "")));
+
+			if (jmessage["error"] != null)
+				return null;
+
+			JToken jlive = jmessage["livestream"][0];
+
+			IList<HitBoxMediaProfile> profiles = null;
+
+			if (jlive["media_profiles"].HasValues)
+			{
+				JArray jprofiles = JArray.Parse(System.Text.RegularExpressions.Regex.Unescape(jlive["media_profiles"].ToString()));
+
+				profiles = new List<HitBoxMediaProfile>(jprofiles.Count);
+
+				foreach (JToken jprofile in jprofiles)
+				{
+					profiles.Add(new HitBoxMediaProfile
+					{
+						Url = jprofile["url"].ToString(),
+						Height = jprofile["height"].ToObject<int>(),
+						Bitrate = jprofile["bitrate"].ToObject<int>()
+					});
+				}
+			}
+
+			return new HitBoxLivestream
+			{
+				ID = jlive["media_id"].ToObject<int>(),
+				Title = jlive["media_status"].ToString(),
+				Viewers = jlive["media_views"].ToObject<int>(),
+				MediaFile = jlive["media_file"].ToString(),
+				Profiles = profiles,
+				IsLive = jlive["media_is_live"].ToString() == "1",
+				IsChatEnabled = jlive["media_chat_enabled"].ToString() == "1",
+				Countries = jlive["media_countries"].HasValues ? jlive["media_countries"].ToObject<List<string>>() : null,
+				Game = new HitBoxGame
+				{
+					ID = jlive["category_id"].ToString() == "" ? 0 : jlive["category_id"].ToObject<int>(),
+					Name = jlive["category_name"].ToString(),
+					Viewers = jlive["category_viewers"].ToString() == "" ? 0 : jlive["category_viewers"].ToObject<int>(),
+					ChannelCount = jlive["category_channels"].ToString() == "" ? 0 : jlive["category_channels"].ToObject<int>(),
+					LogoUrl = jlive["category_logo_large"].ToString(),
+					SeoKey = jlive["category_seo_key"].ToString()
+				},
+				ThumbnailUrl = jlive["media_thumbnail"].ToString(),
+				Channel = new HitBoxChannel
+				{
+					Recordings = jlive["channel"]["recordings"].ToObject<int>(),
+					Videos = jlive["channel"]["videos"].ToObject<int>(),
+					Teams = jlive["channel"]["teams"].ToObject<int>(),
+					User = new HitBoxUser
+					{
+						ID = jlive["channel"]["user_id"].ToObject<int>(),
+						Username = jlive["channel"]["user_name"].ToString(),
+						Followers = jlive["channel"]["followers"].ToObject<int>(),
+						MediaID = jlive["channel"]["user_media_id"].ToObject<int>(),
+						IsLive = jlive["channel"]["media_is_live"].ToString() == "1",
+						AvatarUrl = jlive["channel"]["user_logo_small"].ToString(),
+						CoverUrl = jlive["channel"]["user_cover"].ToString(),
+						LiveSince = DateTime.Parse(jlive["channel"]["media_live_since"].ToString()),
+						Twitter = jlive["channel"]["twitter_account"].ToString()
+					}
+				}
+			};
 		}
 
 		/// <summary>Returns media status and viewer count for channel</summary>
@@ -695,7 +761,23 @@ namespace HitboxUWP8
 		/// <summary>Returns a chat server id</summary>
 		public static async Task<string> GetChatServerSocketID(string serverIP)
 		{
-			return (await Web.GET("http://" + (await GetChatServers()) + "/socket.io/1/")).Split(':')[0];
+			return (await Web.GET("http://" + serverIP + "/socket.io/1/")).Split(':')[0];
+		}
+
+		/// <summary>Returns all possible chat colors you can use</summary>
+		/// <returns></returns>
+		public static async Task<IList<string>> GetChatColors()
+		{
+			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.ChatColors));
+
+			IList<string> colors = new List<string>(100);
+
+			foreach(JToken jcolor in jmessage["colors"])
+			{
+				colors.Add(jcolor.ToString());
+			}
+
+			return colors;
 		}
 
 		/// <summary>Creates a new LivestreamViewer. If "auth" is not true, then you are viewing a livestream as guest/anonymous</summary>

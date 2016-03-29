@@ -31,12 +31,15 @@ namespace HitboxUWP8
 
 		private Parameters _params;
 
-		private int  _currentViewerCount;
-		private bool _isOnline;
-
-		public HitBoxLivestreamViewer(Parameters parameters)
+		internal HitBoxLivestreamViewer(Parameters parameters)
 		{
 			_params = parameters;
+			_socket = new MessageWebSocket();
+			_writer = new DataWriter(_socket.OutputStream);
+
+			_socket.Control.MessageType = SocketMessageType.Utf8;
+			_socket.MessageReceived += socket_MessageReceived;
+			_socket.Closed += socket_Closed;
 		}
 
 		public async void Watch(string socketUrl)
@@ -50,15 +53,8 @@ namespace HitboxUWP8
 				if(_params.Channel == string.Empty)
 					throw new HitBoxException("you must enter channel name");
 
-				_socket = new MessageWebSocket();
-				_socket.Control.MessageType = SocketMessageType.Utf8;
-				_socket.MessageReceived += socket_MessageReceived;
-				_socket.Closed += socket_Closed;
-
 				await _socket.ConnectAsync(new Uri("ws://" + socketUrl + url));
-
-				_writer = new DataWriter(_socket.OutputStream);
-
+				
 				WriteToSocket(new JsonObject
 				{
 					{ "method", JsonValue.CreateStringValue("joinChannel") },
@@ -89,27 +85,25 @@ namespace HitboxUWP8
 				{
 					case "infoMsg":
 						{
-							int viewers = jmessage["params"]["viewers"].ToObject<int>();
-							bool online = jmessage["params"]["online"].ToObject<bool>();
-
-							if(viewers != _currentViewerCount || _isOnline != online)
+							OnStatusChanged(new ViewerStatusChangedArgs
 							{
-								_currentViewerCount = viewers;
-								_isOnline = online;
-								OnStatusChanged(new ViewerStatusChangedArgs
+								Status = new HitBoxMediaStatus
 								{
-									Status = new HitBoxMediaStatus
-									{
-										IsLive = online,
-										Viewers = viewers
-									}
-								});
-							}
+									IsLive = jmessage["params"]["online"].ToObject<bool>(),
+									Viewers = jmessage["params"]["viewers"].ToObject<int>()
+								},
+								Followers = jmessage["params"]["followers"].ToObject<int>(),
+								Subscribers = jmessage["params"]["subscribers"].ToObject<int>()
+							});
+						}
+						break;
+					case "commercialBreak":
+						{
+							// {"method":"commercialBreak","params":{"channel":"ectvlol","count":"2","delay":"0","url":"http://hitbox.tv","timestamp":1459004216}}
 						}
 						break;
 					default:
 						Debug.WriteLine(jmessage.ToString());
-						// {"method":"commercialBreak","params":{"channel":"ectvlol","count":"2","delay":"0","url":"http://hitbox.tv","timestamp":1459004216}}
 						break;
 				}
 			}

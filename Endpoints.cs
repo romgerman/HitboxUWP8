@@ -20,8 +20,10 @@
 		public const string Games			= Api + "games";
 		public const string Game			= Api + "game/";
 		public const string User			= Api + "user/";
+		public const string ProfilePanels	= Api + "profile/";
 		public const string Media			= Api + "media/";
-		public const string Livestreams		= Media + "live/list";
+		public const string Livestream		= Media + "live/";
+		public const string Livestreams		= Livestream + "list";
 		public const string Video			= Media + "video/";
 		public const string Videos			= Video + "list";
 		public const string Subscription	= User + "subscription/";
@@ -31,6 +33,7 @@
 		public const string Following		= Api + "following/user/";
 		public const string Follow			= Api + "follow";
 
+		public const string ChatColors		= Api + "chat/colors";
 		public const string ChatServers		= Api + "chat/servers";
 		public const string ViewerServers	= Api + "player/server";
 
