@@ -370,15 +370,29 @@ namespace HitboxUWP8
 			return jmessage["total_live_views"].ToObject<int>();
 		}
 
-		public static async Task GetProfilePanels(string channel) // TODO: profile panels
+		/// <summary>Returns null if user have no panels</summary>
+		public static async Task<IList<HitBoxProfilePanel>> GetProfilePanels(string channel) // TODO: profile panels
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.ProfilePanels + channel));
 
 			if (!jmessage["profile"].HasValues)
-				return;
+				return null;
 
+			IList<HitBoxProfilePanel> panels = new List<HitBoxProfilePanel>();
 
+			foreach(JToken jpanel in jmessage["profile"]["panels"])
+			{
+				panels.Add(new HitBoxProfilePanel
+				{
+					ID			= jpanel["id"].ToObject<int>(),
+					Headline	= jpanel["headline"].ToString(),
+					Content		= jpanel["content"].ToString(),
+					ImageLink	= jpanel["link"].ToString(),
+					ImageUrl	= jpanel["image"].ToString()
+				});
+			}
 
+			return panels;
 		}
 
 		/// <summary>Returns live games (max = 100)</summary>

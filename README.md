@@ -11,7 +11,7 @@ client.LoggedIn += (s, args) => // Catch logged in event
 		// Do whatever you want
 	}
 };
-client.Login(); // It will open a new page with hitbox api login page
+client.Login(); // It will open a new frame with hitbox api login page
 // ...
 ```
 Only several methods are static

@@ -120,8 +120,8 @@ namespace HitboxUWP8
 
 	public class HitBoxCommBreak
 	{
-		public int		Count { get; set; }
-		public string	Delay { get; set; } // TODO: delay in CommBreak
+		public int		Count	  { get; set; }
+		public string	Delay	  { get; set; } // TODO: delay in CommBreak
 		public DateTime Timestamp { get; set; }
 	}
 
@@ -136,5 +136,14 @@ namespace HitboxUWP8
 	{
 		public bool IsLive { get; set; }
 		public int Viewers { get; set; }
+	}
+
+	public class HitBoxProfilePanel
+	{
+		public int	  ID		{ get; set; }
+		public string Headline	{ get; set; }
+		public string Content	{ get; set; }
+		public string ImageLink { get; set; }
+		public string ImageUrl	{ get; set; }
 	}
 }
