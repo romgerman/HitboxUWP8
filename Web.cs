@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace HitboxUWP8
 {
+	/// <summary>Helper class for web requests</summary>
 	internal static class Web
 	{
 		public static async Task<string> GET(string url)
@@ -104,7 +105,7 @@ namespace HitboxUWP8
 
 			if (encoding != null)
 			{
-				if (encoding.Equals("gzip"))
+				if (encoding.Equals("gzip", System.StringComparison.CurrentCultureIgnoreCase))
 					responseStream = new GZipStream(responseStream, CompressionMode.Decompress);
 				else if (encoding.Equals("deflate"))
 					responseStream = new DeflateStream(responseStream, CompressionMode.Decompress);

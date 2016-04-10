@@ -39,6 +39,7 @@ namespace HitboxUWP8
 			_secret = secret;
 		}
 		
+		/// <summary>Login through hitbox api page. Will open a new frame</summary>
 		public void Login(bool force = false)
 		{
 			if(!_isLoggedIn)
@@ -70,9 +71,11 @@ namespace HitboxUWP8
 			OnLoggedIn(new LoginEventArgs() { Method = LoginEventArgs.Methods.Another, State = LoginEventArgs.States.OK });
 		}
 		
+		/// <summary>Logout from current client</summary>
 		public void Logout()
 		{
 			_isLoggedIn = false;
+			_authOrAccessToken = null;
 			User = null;
 		}
 
@@ -89,7 +92,7 @@ namespace HitboxUWP8
 			}.Stringify());
 
 			if (response.Equals("authentication_failed", StringComparison.CurrentCultureIgnoreCase))
-				throw new HitBoxException(HitBoxExceptionList.AuthFailed);
+				throw new HitBoxException(ExceptionList.AuthFailed);
 
 			return JObject.Parse(response)["access_token"].ToString();
 		}
@@ -102,11 +105,19 @@ namespace HitboxUWP8
 			return (jmessage["user_name"] == null ? null : jmessage["user_name"].ToString());
 		}
 
+		/// <summary>Checks if the user tocken is valid</summary>
+		public async Task<bool> CheckUserToken()
+		{
+			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.TokenValidation + _key + "?token=" + _authOrAccessToken));
+
+			return jmessage["success"].ToObject<bool>();
+		}
+
 		/// <summary>Returns user's stream key. Returns null on error</summary>
 		public async Task<string> GetStreamKey()
 		{
 			if (!_isLoggedIn)
-				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
+				throw new HitBoxException(ExceptionList.NotLoggedIn);
 
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.StreamKey + User.Username + "?authToken=" + _authOrAccessToken));
 
@@ -120,7 +131,7 @@ namespace HitboxUWP8
 		public async Task<HitBoxAccessLevels> GetAccessLevels(string channel)
 		{
 			if (!_isLoggedIn)
-				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
+				throw new HitBoxException(ExceptionList.NotLoggedIn);
 
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.AccessLevels + channel + "/" + _authOrAccessToken));
 
@@ -154,13 +165,13 @@ namespace HitboxUWP8
 			};
 		}
 
-		/// <summary>Editors can run it</summary>
-		public async Task<HitBoxCommBreak> RunCommercialBreak(string channel, int count = 1)
+		/// <summary>Run specified amount of commercial breaks. Editors can run it. Returns null on error</summary>
+		public async Task<HitBoxCommBreak> RunCommercialBreak(string channel, int amount = 1)
 		{
 			if (!_isLoggedIn)
-				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
+				throw new HitBoxException(ExceptionList.NotLoggedIn);
 
-			JObject jmessage = JObject.Parse(await Web.POST(HitBoxEndpoint.CommercialBreak + channel + "/" + count, new JsonObject()
+			JObject jmessage = JObject.Parse(await Web.POST(HitBoxEndpoint.CommercialBreak + channel + "/" + amount, new JsonObject()
 			{
 				{ "user_name", JsonValue.CreateStringValue(User.Username) },
 				{ "authToken", JsonValue.CreateStringValue(_authOrAccessToken) }
@@ -193,11 +204,11 @@ namespace HitboxUWP8
 			};
 		}
 
-		/// <summary>Returns true on success, false on error</summary>
+		/// <summary>Sends message to twitter. Returns true on success, false on error</summary>
 		public async Task<bool> TwitterPost(string message)
 		{
 			if (!_isLoggedIn)
-				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
+				throw new HitBoxException(ExceptionList.NotLoggedIn);
 
 			JObject jmessage = JObject.Parse(await Web.POST(HitBoxEndpoint.TwitterPost + "?authToken=" + _authOrAccessToken + "&user_name=" + User.Username, new JsonObject()
 			{
@@ -212,11 +223,11 @@ namespace HitboxUWP8
 			return true;
 		}
 
-		/// <summary>Returns true on success, false on error</summary>
+		/// <summary>Sends message to facebook. Returns true on success, false on error</summary>
 		public async Task<bool> FacebookPost(string message)
 		{
 			if (!_isLoggedIn)
-				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
+				throw new HitBoxException(ExceptionList.NotLoggedIn);
 
 			JObject jmessage = JObject.Parse(await Web.POST(HitBoxEndpoint.FacebookPost + "?authToken=" + _authOrAccessToken + "&user_name=" + User.Username, new JsonObject()
 			{
@@ -255,22 +266,22 @@ namespace HitboxUWP8
 			};
 		}
 
-		/// <summary>Returns null if channel has no followers</summary>
+		/// <summary>Returns list of followers for specified channel</summary>
 		public static async Task<IList<HitBoxFollower>> GetFollowers(string channel, int offset = 0, int limit = 10)
 		{
-			List<HitBoxFollower> followers = new List<HitBoxFollower>();
-
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Followers + channel + "?offset=" + offset + "&limit=" + limit));
 
+			List<HitBoxFollower> followers = new List<HitBoxFollower>(limit);
+
 			if (jmessage["error"] != null)
-				return null;
+				return followers;
 
 			foreach(JObject jfollower in jmessage["followers"])
 			{
 				followers.Add(new HitBoxFollower()
 				{
-					UserID = jmessage["user_id"].ToObject<int>(),
-					Username = jmessage["user_name"].ToString(),
+					UserID    = jmessage["user_id"].ToObject<int>(),
+					Username  = jmessage["user_name"].ToString(),
 					Followers = jmessage["followers"].ToObject<int>(),
 					DateAdded = DateTime.Parse(jmessage["date_added"].ToString()),
 					AvatarUrl = jmessage["user_logo_small"].ToString()
@@ -280,22 +291,22 @@ namespace HitboxUWP8
 			return followers;
 		}
 
-		/// <summary>Returns null if user not follow anyone</summary>
+		/// <summary>Returns channels that specified user follow</summary>
 		public static async Task<IList<HitBoxFollower>> GetFollowing(string user, int offset = 0, int limit = 10)
 		{
-			List<HitBoxFollower> following = new List<HitBoxFollower>();
-
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Following + "?user_name=" + user + "&offset=" + offset + "&limit=" + limit));
 
+			List<HitBoxFollower> following = new List<HitBoxFollower>(limit);
+
 			if (jmessage["error"] != null)
-				return null;
+				return following;
 
 			foreach (JObject jfollower in jmessage["following"])
 			{
 				following.Add(new HitBoxFollower()
 				{
-					UserID = jmessage["user_id"].ToObject<int>(),
-					Username = jmessage["user_name"].ToString(),
+					UserID    = jmessage["user_id"].ToObject<int>(),
+					Username  = jmessage["user_name"].ToString(),
 					Followers = jmessage["followers"].ToObject<int>(),
 					DateAdded = DateTime.Parse(jmessage["date_added"].ToString()),
 					AvatarUrl = jmessage["user_logo_small"].ToString()
@@ -305,7 +316,7 @@ namespace HitboxUWP8
 			return following;
 		}
 
-		/// <summary>True if user is following channel</summary>
+		/// <summary>Checks if user is following given channel</summary>
 		public static async Task<bool> CheckFollowingStatus(string channel, string user)
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Following + channel + "?user_name=" + user));
@@ -316,11 +327,11 @@ namespace HitboxUWP8
 			return true;
 		}
 
-		/// <summary>False if user is already following channel</summary>
+		/// <summary>Follow a user. Returns false if user is already following channel</summary>
 		public async Task<bool> Follow(string usernameOrUserID)
 		{
 			if (!_isLoggedIn)
-				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
+				throw new HitBoxException(ExceptionList.NotLoggedIn);
 
 			JObject jmessage = JObject.Parse(await Web.POST(HitBoxEndpoint.Follow + "?authToken=" + _authOrAccessToken, new JsonObject()
 			{
@@ -328,38 +339,32 @@ namespace HitboxUWP8
 				{ "follow_id", JsonValue.CreateStringValue(usernameOrUserID) }
 			}.Stringify()));
 
-			if (jmessage["error"].ToObject<bool>())
-				return false;
-			else
-				return true;
+			return jmessage["success"].ToObject<bool>();
 		}
 
-		/// <summary>Unfollow a user</summary>
+		/// <summary>Unfollow a user. Returns false on error</summary>
 		public async Task<bool> Unfollow(int userID)
 		{
 			if (!_isLoggedIn)
-				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
+				throw new HitBoxException(ExceptionList.NotLoggedIn);
 
 			JObject jmessage = JObject.Parse(await Web.DELETE(HitBoxEndpoint.Follow + "?type=user&authToken=" + _authOrAccessToken + "&follow_id=" + userID));
 
-			if (jmessage["error"] != null)
-				return false;
-
-			return true;
+			return jmessage["success"].ToObject<bool>();
 		}
 
-		/// <summary>If subscriber returns true</summary>
+		/// <summary>Checks if the user has subscribed to specified channel</summary>
 		public async Task<bool> CheckSubscriptionStatus(string channel)
 		{
 			if (!_isLoggedIn)
-				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
+				throw new HitBoxException(ExceptionList.NotLoggedIn);
 
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Subscription + channel + "/" + _authOrAccessToken));
 
 			return jmessage["isSubscriber"].ToObject<bool>();
 		}
 
-		/// <summary>Returns Total Media Views for :channel</summary>
+		/// <summary>Returns total media views for channel</summary>
 		public static async Task<int> GetTotalViews(string channel)
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.TotalViews + channel));
@@ -370,8 +375,8 @@ namespace HitboxUWP8
 			return jmessage["total_live_views"].ToObject<int>();
 		}
 
-		/// <summary>Returns null if user have no panels</summary>
-		public static async Task<IList<HitBoxProfilePanel>> GetProfilePanels(string channel) // TODO: profile panels
+		/// <summary>Returns user profile panels. Null if user have no panels or the panels are made through old editor</summary>
+		public static async Task<IList<HitBoxProfilePanel>> GetProfilePanels(string channel)
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.ProfilePanels + channel));
 
@@ -395,12 +400,12 @@ namespace HitboxUWP8
 			return panels;
 		}
 
-		/// <summary>Returns live games (max = 100)</summary>
-		public static async Task<IList<HitBoxGame>> GetGames(string searchQuery = null)
+		/// <summary>Returns games (max = 100)</summary>
+		public static async Task<IList<HitBoxGame>> GetGames(string searchQuery = null, bool liveOnly = true, int limit = 100)
 		{
 			List<HitBoxGame> games = new List<HitBoxGame>();
 
-			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Games + "?liveonly=true&limit=100" + (searchQuery == null ? "" : "&q=" + searchQuery)));
+			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Games + "?limit=" + limit + (searchQuery == null ? "" : "&q=" + searchQuery) + (liveOnly ? "&liveonly=true" : "")));
 			
 			foreach (JObject jgame in jmessage["categories"])
 			{
@@ -418,7 +423,7 @@ namespace HitboxUWP8
 			return games;
 		}
 
-		/// <summary>Returns game with given id. Returns null if game is not found</summary>
+		/// <summary>Returns game with given id. Returns null if game was not found</summary>
 		public static async Task<HitBoxGame> GetGame(string id)
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Game + id));
@@ -436,15 +441,15 @@ namespace HitboxUWP8
 			};
 		}
 
-		/// <summary>Returns null if no videos was found</summary>
+		/// <summary>Returns videos for specified game (0 = all games)</summary>
 		public static async Task<IList<HitBoxVideo>> GetVideos(int gameID = 0, int start = 0, int limit = 10, bool weekly = true)
 		{
-			List<HitBoxVideo> videos = new List<HitBoxVideo>(limit);
-
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Videos + "?filter=" + (weekly ? "weekly" : "popular") + "&game=" + gameID + "&start=" + start + "&limit=" + limit));
 
+			List<HitBoxVideo> videos = new List<HitBoxVideo>(limit);
+
 			if (jmessage["error"] != null)
-				return null;
+				return videos;
 
 			IList<HitBoxMediaProfile> profiles = null;
 
@@ -507,8 +512,8 @@ namespace HitboxUWP8
 
 			return videos;
 		}
-		
-		/// <summary>Returns null if no video was found</summary>
+
+		/// <summary>Returns video by given id. Returns null if no video was found</summary>
 		public async Task<HitBoxVideo> GetVideo(int id, bool useToken = false)
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Video + id + (useToken ? "?authToken=" + _authOrAccessToken : "")));
@@ -522,13 +527,13 @@ namespace HitboxUWP8
 
 			JArray jprofiles = JArray.Parse(System.Text.RegularExpressions.Regex.Unescape(jvideo["media_profiles"].ToString()));
 
-			for(int i = 0; i < jprofiles.Count; i++)
+			foreach (JToken jprofile in jprofiles)
 			{
 				profiles.Add(new HitBoxMediaProfile
 				{
-					Url		= jprofiles[i]["url"].ToString(),
-					Height	= jprofiles[i]["height"].ToObject<int>(),
-					Bitrate = jprofiles[i]["bitrate"].ToObject<int>()
+					Url		= jprofile["url"].ToString(),
+					Height	= jprofile["height"].ToObject<int>(),
+					Bitrate = jprofile["bitrate"].ToObject<int>()
 				});
 			}
 
@@ -583,15 +588,15 @@ namespace HitboxUWP8
 			
 		}
 
-		/// <summary>Returns null if no livestreams was found</summary>
+		/// <summary>Returns list of livestream for specified game</summary>
 		public async Task<IList<HitBoxLivestream>> GetLivestreams(int gameID = 0, int start = 0, int limit = 10, bool liveonly = true, bool useToken = false)
 		{
-			IList<HitBoxLivestream> livestreams = new List<HitBoxLivestream>(limit);
-
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Livestreams + "?liveonly=" + (liveonly ? "true" : "false") + "&game=" + gameID + "&start=" + start + "&limit=" + limit));
 
+			IList<HitBoxLivestream> livestreams = new List<HitBoxLivestream>(limit);
+
 			if (jmessage["error"] != null)
-				return null;
+				return livestreams;
 
 			IList<HitBoxMediaProfile> profiles = null;
 
@@ -658,6 +663,7 @@ namespace HitboxUWP8
 			return livestreams;
 		}
 
+		/// <summary>Returns livestream for specified channel. Return null if no livestream was found</summary>
 		public async Task<HitBoxLivestream> GetLivestream(string channel, bool useToken = false)
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Livestream + channel + (useToken ? "?authToken=" + _authOrAccessToken : "")));
@@ -727,7 +733,7 @@ namespace HitboxUWP8
 			};
 		}
 
-		/// <summary>Returns media status and viewer count for channel</summary>
+		/// <summary>Returns media status and viewer count for channel. Null if channel is not live</summary>
 		public static async Task<HitBoxMediaStatus> MediaStatus(string channel)
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.MediaStatus + channel));
@@ -757,7 +763,7 @@ namespace HitboxUWP8
 			return servers;
 		}
 
-		/// <summary>Returns servers for "viewer"</summary>
+		/// <summary>Returns servers for "viewer" (player servers)</summary>
 		public static async Task<IList<string>> GetViewerServers()
 		{
 			JArray jmessage = JArray.Parse(await Web.GET(HitBoxEndpoint.ViewerServers));
@@ -772,14 +778,13 @@ namespace HitboxUWP8
 			return servers;
 		}
 
-		/// <summary>Returns a chat server id</summary>
+		/// <summary>Returns chat server id</summary>
 		public static async Task<string> GetChatServerSocketID(string serverIP)
 		{
 			return (await Web.GET("http://" + serverIP + "/socket.io/1/")).Split(':')[0];
 		}
 
 		/// <summary>Returns all possible chat colors you can use</summary>
-		/// <returns></returns>
 		public static async Task<IList<string>> GetChatColors()
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.ChatColors));
@@ -798,7 +803,7 @@ namespace HitboxUWP8
 		public HitBoxLivestreamViewer CreateLivestreamViewer(string channel, bool auth = false)
 		{
 			if(!_isLoggedIn && auth)
-				throw new HitBoxException(HitBoxExceptionList.NotLoggedIn);
+				throw new HitBoxException(ExceptionList.NotLoggedIn);
 
 			if (_isLoggedIn && auth)
 				return new HitBoxLivestreamViewer(new HitBoxLivestreamViewer.Parameters

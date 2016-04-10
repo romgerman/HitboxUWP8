@@ -6,11 +6,10 @@ using Windows.Networking.Sockets;
 using Windows.Storage.Streams;
 
 using Newtonsoft.Json.Linq;
-using System.Threading.Tasks;
 
 namespace HitboxUWP8
 {
-	/// <summary>TODO: this</summary>
+	/// <summary>TODO: HitBoxLivestreamViewer info</summary>
 	public class HitBoxLivestreamViewer // TODO: exceptions and comments
 	{
 		public class Parameters
@@ -20,7 +19,7 @@ namespace HitboxUWP8
 			public string Token		= string.Empty;
 		}
 
-		/// <summary>Occurs when viewers count changes or livestream goes offline</summary>
+		/// <summary>Occurs when viewers/followers/subscribers count changes or livestream goes offline/online</summary>
 		public event EventHandler<ViewerStatusChangedArgs> StatusChanged;
 
 		private const string url = "/viewer";
@@ -42,7 +41,7 @@ namespace HitboxUWP8
 			_socket.Closed += socket_Closed;
 		}
 
-		public async void Watch(string socketUrl)
+		public async void Watch()
 		{
 			if (_isWatching)
 			{
@@ -53,7 +52,16 @@ namespace HitboxUWP8
 				if(_params.Channel == string.Empty)
 					throw new HitBoxException("you must enter channel name");
 
-				await _socket.ConnectAsync(new Uri("ws://" + socketUrl + url));
+				string socketUrl = (await HitBoxClientBase.GetViewerServers())[0];
+
+				try
+				{
+					await _socket.ConnectAsync(new Uri("ws://" + socketUrl + url));
+				}
+				catch(Exception e)
+				{
+					Debug.WriteLine("Viewer: " + e.ToString());
+				}
 				
 				WriteToSocket(new JsonObject
 				{
@@ -75,9 +83,8 @@ namespace HitboxUWP8
 		{
 			using (DataReader reader = args.GetDataReader())
 			{
-				string read = string.Empty;
 				reader.UnicodeEncoding = UnicodeEncoding.Utf8;
-				read = reader.ReadString(reader.UnconsumedBufferLength);
+				string read = reader.ReadString(reader.UnconsumedBufferLength);
 
 				JObject jmessage = JObject.Parse(read);
 

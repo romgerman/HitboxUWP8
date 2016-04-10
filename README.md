@@ -1,5 +1,6 @@
 # HitboxUWP8
 C# wrapper for hitbox api for Universal Windows Apps 8.1 (WP and W)
+.NET 4.6
 
 ### It's simple
 ```cs
