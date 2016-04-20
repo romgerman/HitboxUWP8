@@ -1,6 +1,8 @@
 # HitboxUWP8
-C# wrapper for hitbox api for Universal Windows Apps 8.1 (WP and W)
-.NET 4.6
+C# wrapper for hitbox api for Universal Windows Apps 8.1 (WP and W) (.NET 4.6)
+
+#### Get it from NuGet
+https://www.nuget.org/packages/HitboxUWP8/
 
 ### It's simple
 ```cs
@@ -15,14 +17,12 @@ client.LoggedIn += (s, args) => // Catch logged in event
 client.Login(); // It will open a new frame with hitbox api login page
 // ...
 ```
-Only several methods are static
-
 
 ### Now supporting
 ##### REST
 | Name                            | Methods      |
 |---------------------------------|--------------|
-| OAuth login                     | —            |
+| OAuth login                     | +            |
 | User                            | GET          |
 | User Access Levels              | GET          |
 | Stream Key                      | GET          |
@@ -44,9 +44,8 @@ Only several methods are static
 ##### WebSockets
 * LivestreamViewer (alpha)
 
-
 ### Soon
-* Chat (now you can only __connect__ to channel chat)
+* Chat (currently you can only __connect__ to channel chat)
 
 #### Additional dependencies
 * Newtonsoft.Json

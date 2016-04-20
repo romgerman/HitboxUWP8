@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace HitboxUWP8
 {
@@ -17,6 +18,17 @@ namespace HitboxUWP8
 
 		public string AvatarUrl	{ get; set; }
 		public string CoverUrl	{ get; set; }
+
+		internal HitBoxClientBase _client;
+
+		public async Task<bool> Follow()   => await _client.Follow(Username);
+		public async Task<bool> Unfollow() => await _client.Unfollow(ID);
+
+		public async Task<bool> CheckFollowingStatus() => await HitBoxClientBase.CheckFollowingStatus(Username, _client.User.Username);
+
+		public async Task<int> GetTotalViews() => await HitBoxClientBase.GetTotalViews(Username);
+
+		public async Task<IList<HitBoxProfilePanel>> GetProfilePanels() => await HitBoxClientBase.GetProfilePanels(Username);
 	}
 
 	public class HitBoxChannel

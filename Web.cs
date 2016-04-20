@@ -9,58 +9,16 @@ namespace HitboxUWP8
 	/// <summary>Helper class for web requests</summary>
 	internal static class Web
 	{
+		private enum Method { GET, DELETE }
+
 		public static async Task<string> GET(string url)
 		{
-			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-			request.Method = "GET";
-
-			try
-			{
-				using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
-				{
-					using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
-					{
-						return reader.ReadToEnd();
-					}
-				}
-			}
-			catch (WebException e)
-			{
-				using (HttpWebResponse response = (HttpWebResponse)e.Response)
-				{
-					using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
-					{
-						return reader.ReadToEnd();
-					}
-				}
-			}
+			return await GET_DELETE(url);
 		}
 
 		public static async Task<string> DELETE(string url)
 		{
-			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-			request.Method = "DELETE";
-
-			try
-			{
-				using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
-				{
-					using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
-					{
-						return reader.ReadToEnd();
-					}
-				}
-			}
-			catch (WebException e)
-			{
-				using (HttpWebResponse response = (HttpWebResponse)e.Response)
-				{
-					using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
-					{
-						return reader.ReadToEnd();
-					}
-				}
-			}
+			return await GET_DELETE(url, Method.DELETE);
 		}
 
 		public static async Task<string> POST(string url, string body)
@@ -74,6 +32,33 @@ namespace HitboxUWP8
 				byte[] jsonAsBytes = Encoding.UTF8.GetBytes(body);
 				await stream.WriteAsync(jsonAsBytes, 0, jsonAsBytes.Length);
 			}
+
+			try
+			{
+				using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
+				{
+					using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
+					{
+						return reader.ReadToEnd();
+					}
+				}
+			}
+			catch (WebException e)
+			{
+				using (HttpWebResponse response = (HttpWebResponse)e.Response)
+				{
+					using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
+					{
+						return reader.ReadToEnd();
+					}
+				}
+			}
+		}
+
+		private static async Task<string> GET_DELETE(string url, Method method = Method.GET)
+		{
+			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+			request.Method = method == Method.GET ? "GET" : "DELETE";
 
 			try
 			{
@@ -112,6 +97,30 @@ namespace HitboxUWP8
 			}
 
 			return responseStream;
+		}
+
+		public static class Streams
+		{
+			public static async Task<Stream> GET(string url)
+			{
+				HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+				request.Method = "GET";
+
+				try
+				{
+					using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
+					{
+						return CheckForCompression(response);
+					}
+				}
+				catch (WebException e)
+				{
+					using (HttpWebResponse response = (HttpWebResponse)e.Response)
+					{
+						return CheckForCompression(response);
+					}
+				}
+			}
 		}
 	}
 }
