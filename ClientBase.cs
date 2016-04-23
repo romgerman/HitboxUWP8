@@ -59,7 +59,7 @@ namespace HitboxUWP8
 
 		/// <summary>Login with auth or access token</summary>
 		/// <param name="authOrAccessToken">auth token = access token</param>
-		public async void Login(string authOrAccessToken)
+		public async Task Login(string authOrAccessToken)
 		{
 			if (_isLoggedIn)
 				return;
@@ -315,26 +315,34 @@ namespace HitboxUWP8
 			if (channel == null)
 				throw new ArgumentNullException("channel");
 
-			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Followers + channel + "?offset=" + offset + "&limit=" + limit));
+			Stream response = await Web.Streams.GET(HitBoxEndpoint.Followers + channel + "?offset=" + offset + "&limit=" + limit);
 
-			List<HitBoxFollower> followers = new List<HitBoxFollower>(limit);
-
-			if (jmessage["error"] != null)
-				return followers;
-
-			foreach(JObject jfollower in jmessage["followers"])
+			using (StreamReader streamReader = new StreamReader(response))
 			{
-				followers.Add(new HitBoxFollower()
+				using (JsonReader jsonReader = new JsonTextReader(streamReader))
 				{
-					UserID    = jmessage["user_id"].ToObject<int>(),
-					Username  = jmessage["user_name"].ToString(),
-					Followers = jmessage["followers"].ToObject<int>(),
-					DateAdded = DateTime.Parse(jmessage["date_added"].ToString()),
-					AvatarUrl = jmessage["user_logo_small"].ToString()
-				});
-			}
+					JObject jmessage = JObject.Load(jsonReader);
 
-			return followers;
+					List<HitBoxFollower> followers = new List<HitBoxFollower>(limit);
+
+					if (jmessage["error"] != null)
+						return followers;
+
+					foreach (JObject jfollower in jmessage["followers"])
+					{
+						followers.Add(new HitBoxFollower()
+						{
+							UserID    = jfollower["user_id"].ToObject<int>(),
+							Username  = jfollower["user_name"].ToString(),
+							Followers = jfollower["followers"].ToObject<int>(),
+							DateAdded = DateTime.Parse(jfollower["date_added"].ToString()),
+							AvatarUrl = jfollower["user_logo_small"].ToString()
+						});
+					}
+
+					return followers;
+				}
+			}
 		}
 
 		/// <summary>Get list of channels that specified user follows</summary>
@@ -343,26 +351,34 @@ namespace HitboxUWP8
 			if (user == null)
 				throw new ArgumentNullException("user");
 
-			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Following + "?user_name=" + user + "&offset=" + offset + "&limit=" + limit));
+			Stream response = await Web.Streams.GET(HitBoxEndpoint.Following + "?user_name=" + user + "&offset=" + offset + "&limit=" + limit);
 
-			List<HitBoxFollower> following = new List<HitBoxFollower>(limit);
-
-			if (jmessage["error"] != null)
-				return following;
-
-			foreach (JObject jfollower in jmessage["following"])
+			using (StreamReader streamReader = new StreamReader(response))
 			{
-				following.Add(new HitBoxFollower()
+				using (JsonReader jsonReader = new JsonTextReader(streamReader))
 				{
-					UserID    = jmessage["user_id"].ToObject<int>(),
-					Username  = jmessage["user_name"].ToString(),
-					Followers = jmessage["followers"].ToObject<int>(),
-					DateAdded = DateTime.Parse(jmessage["date_added"].ToString()),
-					AvatarUrl = jmessage["user_logo_small"].ToString()
-				});
-			}
+					JObject jmessage = JObject.Load(jsonReader);
 
-			return following;
+					List<HitBoxFollower> following = new List<HitBoxFollower>(limit);
+
+					if (jmessage["error"] != null)
+						return following;
+
+					foreach (JObject jfollower in jmessage["following"])
+					{
+						following.Add(new HitBoxFollower()
+						{
+							UserID    = jfollower["user_id"].ToObject<int>(),
+							Username  = jfollower["user_name"].ToString(),
+							Followers = jfollower["followers"].ToObject<int>(),
+							DateAdded = DateTime.Parse(jfollower["date_added"].ToString()),
+							AvatarUrl = jfollower["user_logo_small"].ToString()
+						});
+					}
+
+					return following;
+				}
+			}
 		}
 
 		/// <summary>Check if user is following given channel</summary>
@@ -493,9 +509,9 @@ namespace HitboxUWP8
 							ID      = jgame["category_id"].ToObject<int>(),
 							Name    = jgame["category_name"].ToString(),
 							Viewers = jgame["category_viewers"].ToObject<int>(),
-							ChannelCount = jgame["category_media_count"].ToObject<int>(),
 							LogoUrl = jgame["category_logo_large"].ToString(),
-							SeoKey  = jgame["category_seo_key"].ToString()
+							SeoKey  = jgame["category_seo_key"].ToString(),
+							ChannelCount = jgame["category_media_count"].ToObject<int>(),
 						});
 					}
 
@@ -527,74 +543,82 @@ namespace HitboxUWP8
 		/// <param name="gameID">0 = all games</param>
 		public async Task<IList<HitBoxVideo>> GetVideos(int gameID = 0, int start = 0, int limit = 10, bool weekly = true)
 		{
-			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Videos + "?filter=" + (weekly ? "weekly" : "popular") + "&game=" + gameID + "&start=" + start + "&limit=" + limit));
+			Stream response = await Web.Streams.GET(HitBoxEndpoint.Videos + "?filter=" + (weekly ? "weekly" : "popular") + "&game=" + gameID + "&start=" + start + "&limit=" + limit);
 
-			List<HitBoxVideo> videos = new List<HitBoxVideo>(limit);
-
-			if (jmessage["error"] != null)
-				return videos;
-
-			IList<HitBoxMediaProfile> profiles = null;
-
-			foreach (JObject jvideo in jmessage["video"])
+			using (StreamReader streamReader = new StreamReader(response))
 			{
-				JArray jprofiles = JArray.Parse(System.Text.RegularExpressions.Regex.Unescape(jvideo["media_profiles"].ToString()));
-
-				profiles = new List<HitBoxMediaProfile>(jprofiles.Count);
-
-				foreach (JToken jprofile in jprofiles)
+				using (JsonReader jsonReader = new JsonTextReader(streamReader))
 				{
-					profiles.Add(new HitBoxMediaProfile
-					{
-						Url		= jprofile["url"].ToString(),
-						Height	= jprofile["height"].ToObject<int>(),
-						Bitrate = jprofile["bitrate"].ToObject<int>()
-					});
-				}
+					JObject jmessage = JObject.Load(jsonReader);
 
-				videos.Add(new HitBoxVideo
-				{
-					ID			 = jvideo["media_id"].ToObject<int>(),
-					Title		 = jvideo["media_title"].ToString(),
-					Views		 = jvideo["media_views"].ToObject<int>(),
-					Description  = jvideo["media_description"].ToString(),
-					DateAdded	 = DateTime.Parse(jvideo["media_date_added"].ToString()),
-					Duration	 = jvideo["media_duration_format"].ToString(),
-					ThumbnailUrl = jvideo["media_thumbnail"].ToString(),
-					MediaFile	 = jvideo["media_file"].ToString(),
-					Profiles	 = profiles,
-					Game = new HitBoxGame
+					List<HitBoxVideo> videos = new List<HitBoxVideo>(limit);
+
+					if (jmessage["error"] != null)
+						return videos;
+
+					IList<HitBoxMediaProfile> profiles = null;
+
+					foreach (JObject jvideo in jmessage["video"])
 					{
-						ID			 = jvideo["category_id"].ToString() == "" ? 0 : jvideo["category_id"].ToObject<int>(),
-						Name		 = jvideo["category_name"].ToString(),
-						Viewers		 = jvideo["category_viewers"].ToString() == "" ? 0 : jvideo["category_viewers"].ToObject<int>(),
-						ChannelCount = jvideo["category_channels"].ToString() == "" ? 0 : jvideo["category_channels"].ToObject<int>(),
-						LogoUrl		 = jvideo["category_logo_large"].ToString(),
-						SeoKey		 = jvideo["category_seo_key"].ToString()
-					},
-					Channel = new HitBoxChannel
-					{
-						Recordings  = jvideo["channel"]["recordings"].ToObject<int>(),
-						Videos		= jvideo["channel"]["videos"].ToObject<int>(),
-						Teams		= jvideo["channel"]["teams"].ToObject<int>(),
-						User = new HitBoxUser
+						JArray jprofiles = JArray.Parse(System.Text.RegularExpressions.Regex.Unescape(jvideo["media_profiles"].ToString()));
+
+						profiles = new List<HitBoxMediaProfile>(jprofiles.Count);
+
+						foreach (JToken jprofile in jprofiles)
 						{
-							ID			= jvideo["channel"]["user_id"].ToObject<int>(),
-							Username	= jvideo["channel"]["user_name"].ToString(),
-							Followers	= jvideo["channel"]["followers"].ToObject<int>(),
-							MediaID		= jvideo["channel"]["user_media_id"].ToObject<int>(),
-							IsLive		= jvideo["channel"]["media_is_live"].ToString() == "1",
-							LiveSince	= DateTime.Parse(jvideo["channel"]["media_live_since"].ToString()),
-							AvatarUrl	= jvideo["channel"]["user_logo_small"].ToString(),
-							CoverUrl	= jvideo["channel"]["user_cover"].ToString(),
-							Twitter		= jvideo["channel"]["twitter_account"].ToString(),
-							_client		= this
+							profiles.Add(new HitBoxMediaProfile
+							{
+								Url     = jprofile["url"].ToString(),
+								Height  = jprofile["height"].ToObject<int>(),
+								Bitrate = jprofile["bitrate"].ToObject<int>()
+							});
 						}
-					}
-				});
-			}
 
-			return videos;
+						videos.Add(new HitBoxVideo
+						{
+							ID    = jvideo["media_id"].ToObject<int>(),
+							Title = jvideo["media_title"].ToString(),
+							Views = jvideo["media_views"].ToObject<int>(),
+							Description  = jvideo["media_description"].ToString(),
+							DateAdded    = DateTime.Parse(jvideo["media_date_added"].ToString()),
+							Duration     = jvideo["media_duration_format"].ToString(),
+							ThumbnailUrl = jvideo["media_thumbnail"].ToString(),
+							MediaFile    = jvideo["media_file"].ToString(),
+							Profiles = profiles,
+							Game = new HitBoxGame
+							{
+								ID      = jvideo["category_id"].ToString() == "" ? 0 : jvideo["category_id"].ToObject<int>(),
+								Name    = jvideo["category_name"].ToString(),
+								Viewers = jvideo["category_viewers"].ToString() == "" ? 0 : jvideo["category_viewers"].ToObject<int>(),
+								ChannelCount = jvideo["category_channels"].ToString() == "" ? 0 : jvideo["category_channels"].ToObject<int>(),
+								LogoUrl = jvideo["category_logo_large"].ToString(),
+								SeoKey  = jvideo["category_seo_key"].ToString()
+							},
+							Channel = new HitBoxChannel
+							{
+								Recordings = jvideo["channel"]["recordings"].ToObject<int>(),
+								Videos = jvideo["channel"]["videos"].ToObject<int>(),
+								Teams  = jvideo["channel"]["teams"].ToObject<int>(),
+								User = new HitBoxUser
+								{
+									ID = jvideo["channel"]["user_id"].ToObject<int>(),
+									Username  = jvideo["channel"]["user_name"].ToString(),
+									Followers = jvideo["channel"]["followers"].ToObject<int>(),
+									MediaID   = jvideo["channel"]["user_media_id"].ToObject<int>(),
+									IsLive    = jvideo["channel"]["media_is_live"].ToString() == "1",
+									LiveSince = DateTime.Parse(jvideo["channel"]["media_live_since"].ToString()),
+									AvatarUrl = jvideo["channel"]["user_logo_small"].ToString(),
+									CoverUrl  = jvideo["channel"]["user_cover"].ToString(),
+									Twitter   = jvideo["channel"]["twitter_account"].ToString(),
+									_client   = this
+								}
+							}
+						});
+					}
+
+					return videos;
+				}
+			}
 		}
 
 		/// <summary>Get video with specified id</summary>
@@ -667,6 +691,8 @@ namespace HitboxUWP8
 			};
 		}
 
+		/// <summary>Create a video from a recording</summary>
+		/// <returns></returns>
 		public async Task<bool> CreateVideo() // TODO: CreateVideo method
 		{
 			return false;
@@ -684,77 +710,85 @@ namespace HitboxUWP8
 			if (useToken && !_isLoggedIn)
 				throw new HitBoxException(ExceptionList.NotLoggedIn);
 
-			JObject jmessage = JObject.Parse(await Web.GET(HitBoxEndpoint.Livestreams + "?liveonly=" + (liveonly ? "true" : "false") + "&game=" + gameID + "&start=" + start + "&limit=" + limit));
+			Stream response = await Web.Streams.GET(HitBoxEndpoint.Livestreams + "?liveonly=" + (liveonly ? "true" : "false") + "&game=" + gameID + "&start=" + start + "&limit=" + limit);
 
-			IList<HitBoxLivestream> livestreams = new List<HitBoxLivestream>(limit);
-
-			if (jmessage["error"] != null)
-				return livestreams;
-
-			IList<HitBoxMediaProfile> profiles = null;
-
-			foreach (JObject jlive in jmessage["livestream"])
+			using (StreamReader streamReader = new StreamReader(response))
 			{
-				if (jlive["media_profiles"].HasValues)
+				using (JsonReader jsonReader = new JsonTextReader(streamReader))
 				{
-					JArray jprofiles = JArray.Parse(System.Text.RegularExpressions.Regex.Unescape(jlive["media_profiles"].ToString()));
+					JObject jmessage = JObject.Load(jsonReader);
 
-					profiles = new List<HitBoxMediaProfile>(jprofiles.Count);
+					IList<HitBoxLivestream> livestreams = new List<HitBoxLivestream>(limit);
 
-					foreach (JToken jprofile in jprofiles)
+					if (jmessage["error"] != null)
+						return livestreams;
+
+					IList<HitBoxMediaProfile> profiles = null;
+
+					foreach (JObject jlive in jmessage["livestream"])
 					{
-						profiles.Add(new HitBoxMediaProfile
+						if (jlive["media_profiles"].HasValues)
 						{
-							Url		= jprofile["url"].ToString(),
-							Height	= jprofile["height"].ToObject<int>(),
-							Bitrate = jprofile["bitrate"].ToObject<int>()
+							JArray jprofiles = JArray.Parse(System.Text.RegularExpressions.Regex.Unescape(jlive["media_profiles"].ToString()));
+
+							profiles = new List<HitBoxMediaProfile>(jprofiles.Count);
+
+							foreach (JToken jprofile in jprofiles)
+							{
+								profiles.Add(new HitBoxMediaProfile
+								{
+									Url     = jprofile["url"].ToString(),
+									Height  = jprofile["height"].ToObject<int>(),
+									Bitrate = jprofile["bitrate"].ToObject<int>()
+								});
+							}
+						}
+
+						livestreams.Add(new HitBoxLivestream
+						{
+							ID        = jlive["media_id"].ToObject<int>(),
+							Title     = jlive["media_status"].ToString(),
+							Viewers   = jlive["media_views"].ToObject<int>(),
+							MediaFile = jlive["media_file"].ToString(),
+							Profiles  = profiles,
+							IsLive    = jlive["media_is_live"].ToString() == "1",
+							IsChatEnabled = jlive["media_chat_enabled"].ToString() == "1",
+							Countries = jlive["media_countries"].HasValues ? jlive["media_countries"].ToObject<List<string>>() : null,
+							Game = new HitBoxGame
+							{
+								ID      = jlive["category_id"].ToString() == "" ? 0 : jlive["category_id"].ToObject<int>(),
+								Name    = jlive["category_name"].ToString(),
+								Viewers = jlive["category_viewers"].ToString() == "" ? 0 : jlive["category_viewers"].ToObject<int>(),
+								ChannelCount = jlive["category_channels"].ToString() == "" ? 0 : jlive["category_channels"].ToObject<int>(),
+								LogoUrl = jlive["category_logo_large"].ToString(),
+								SeoKey  = jlive["category_seo_key"].ToString()
+							},
+							ThumbnailUrl = jlive["media_thumbnail"].ToString(),
+							Channel = new HitBoxChannel
+							{
+								Recordings = jlive["channel"]["recordings"].ToObject<int>(),
+								Videos = jlive["channel"]["videos"].ToObject<int>(),
+								Teams  = jlive["channel"]["teams"].ToObject<int>(),
+								User = new HitBoxUser
+								{
+									ID = jlive["channel"]["user_id"].ToObject<int>(),
+									Username  = jlive["channel"]["user_name"].ToString(),
+									Followers = jlive["channel"]["followers"].ToObject<int>(),
+									MediaID   = jlive["channel"]["user_media_id"].ToObject<int>(),
+									IsLive    = jlive["channel"]["media_is_live"].ToString() == "1",
+									AvatarUrl = jlive["channel"]["user_logo_small"].ToString(),
+									CoverUrl  = jlive["channel"]["user_cover"].ToString(),
+									LiveSince = DateTime.Parse(jlive["channel"]["media_live_since"].ToString()),
+									Twitter   = jlive["channel"]["twitter_account"].ToString(),
+									_client   = this
+								}
+							}
 						});
 					}
+
+					return livestreams;
 				}
-
-				livestreams.Add(new HitBoxLivestream
-				{
-					ID				= jlive["media_id"].ToObject<int>(),
-					Title			= jlive["media_status"].ToString(),
-					Viewers			= jlive["media_views"].ToObject<int>(),
-					MediaFile		= jlive["media_file"].ToString(),
-					Profiles		= profiles,
-					IsLive			= jlive["media_is_live"].ToString() == "1",
-					IsChatEnabled	= jlive["media_chat_enabled"].ToString() == "1",
-					Countries		= jlive["media_countries"].HasValues ? jlive["media_countries"].ToObject<List<string>>() : null,
-					Game = new HitBoxGame
-					{
-						ID				= jlive["category_id"].ToString() == "" ? 0 : jlive["category_id"].ToObject<int>(),
-						Name			= jlive["category_name"].ToString(),
-						Viewers			= jlive["category_viewers"].ToString() == "" ? 0 : jlive["category_viewers"].ToObject<int>(),
-						ChannelCount	= jlive["category_channels"].ToString() == "" ? 0 : jlive["category_channels"].ToObject<int>(),
-						LogoUrl			= jlive["category_logo_large"].ToString(),
-						SeoKey			= jlive["category_seo_key"].ToString()
-					},
-					ThumbnailUrl = jlive["media_thumbnail"].ToString(),
-					Channel = new HitBoxChannel
-					{
-						Recordings	= jlive["channel"]["recordings"].ToObject<int>(),
-						Videos		= jlive["channel"]["videos"].ToObject<int>(),
-						Teams		= jlive["channel"]["teams"].ToObject<int>(),
-						User = new HitBoxUser
-						{
-							ID			= jlive["channel"]["user_id"].ToObject<int>(),
-							Username	= jlive["channel"]["user_name"].ToString(),
-							Followers	= jlive["channel"]["followers"].ToObject<int>(),
-							MediaID		= jlive["channel"]["user_media_id"].ToObject<int>(),
-							IsLive		= jlive["channel"]["media_is_live"].ToString() == "1",
-							AvatarUrl	= jlive["channel"]["user_logo_small"].ToString(),
-							CoverUrl	= jlive["channel"]["user_cover"].ToString(),
-							LiveSince	= DateTime.Parse(jlive["channel"]["media_live_since"].ToString()),
-							Twitter		= jlive["channel"]["twitter_account"].ToString(),
-							_client		= this
-						}
-					}
-				});
 			}
-
-			return livestreams;
 		}
 
 		/// <summary>Get livestream for specified channel</summary>
