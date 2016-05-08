@@ -1,19 +1,31 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Windows.Data.Json;
 using Windows.Networking.Sockets;
 using Windows.Storage.Streams;
 
+using Newtonsoft.Json.Linq;
+
 namespace HitboxUWP8
 {
+	/// <summary>Chat</summary>
 	public class HitBoxChat // DOTO: chat connection timeout. "If you cannot connect after 8 seconds you should grab another server and connection ID."
 	{
+		/// <summary>Occurs when user has been connected to a chat</summary>
 		public event EventHandler Connected;
+		/// <summary>Occurs when user has been logged in chat</summary>
 		public event EventHandler<ChatLoggedInEventArgs> LoggenIn;
+		/// <summary>Occurs on new message</summary>
+		public event EventHandler<ChatMessageReceivedEventArgs> MessageReceived;
+
+		private static class MessageType
+		{
+			public const char Connected = '1';
+			public const char Echo = '2';
+			public const char Interactions = '5';
+		}
 
 		private MessageWebSocket _socket;
 		private DataWriter _writer;
@@ -23,6 +35,7 @@ namespace HitboxUWP8
 
 		private string _token;
 		private string _username;
+		private string _channel;
 
 		private HitBoxRole _role = HitBoxRole.Guest;
 
@@ -34,7 +47,8 @@ namespace HitboxUWP8
 			_username = username;
 		}
 
-		public async void Connect()
+		/// <summary>Connect to a chat server</summary>
+		public async Task Connect()
 		{
 			_socket = new MessageWebSocket();
 			_writer = new DataWriter(_socket.OutputStream);
@@ -52,6 +66,7 @@ namespace HitboxUWP8
 			await _socket.ConnectAsync(new Uri(connectionUrl));
 		}
 
+		/// <summary>Disconnect from the chat server</summary>
 		public void Disconnect()
 		{
 			if(_isConnected)
@@ -59,23 +74,78 @@ namespace HitboxUWP8
 				if(_isLoggedIn)
 					Logout();
 
-				_socket.Close(1000, "");
+				_socket.Close(1000, string.Empty);
 			}
 		}
 
+		/// <summary>Login to a channel chat</summary>
 		public void Login(string channel)
 		{
 			if (!_isConnected)
 				throw new HitBoxException();
 
 			if(!_isLoggedIn)
-				WriteToSocket("5:::{\"name\":\"message\",\"args\":[{\"method\":\"joinChannel\",\"params\":{\"channel\":\"" + channel.ToLower() + "\",\"name\":\"" + (_username == null ? "UnknownSoldier" : _username) + "\",\"token\":\"" + (_token == null ? "null" : _token) + "\",\"isAdmin\":false}}]}");
+			{
+				WriteToSocket("5:::" + new JsonObject
+				{
+					{ "name", JsonValue.CreateStringValue("message") },
+					{ "args", new JsonArray
+						{
+							new JsonObject
+							{
+								{ "method", JsonValue.CreateStringValue("joinChannel") },
+								{ "params", new JsonObject
+									{
+										{ "channel", JsonValue.CreateStringValue(channel.ToLower()) },
+										{ "name", JsonValue.CreateStringValue(_username == null ? "UnknownSoldier" : _username) },
+										{ "token", JsonValue.CreateStringValue(_token == null ? "null" : _token) },
+										{ "isAdmin", JsonValue.CreateBooleanValue(false) }
+									}
+								}
+							}
+						}
+					}
+				}.Stringify());
+			}
+
+			_channel = channel;
 		}
 
 		private void Logout()
 		{
 			WriteToSocket("5:::{\"name\":\"message\",\"args\":[	{\"method\":\"partChannel\",\"params\":{\"name\":\"" + (_username == null ? "UnknownSoldier" : _username) + "\"}}]}");
 			_isLoggedIn = false;
+		}
+
+		/// <param name="message">Limited to 300 chars</param>
+		public void SendMessage(string message)
+		{
+			if (!_isLoggedIn)
+				throw new HitBoxException(ExceptionList.NotLoggedIn);
+
+			if (message == null)
+				throw new ArgumentNullException("message");
+
+			WriteToSocket("5:::" + new JsonObject
+			{
+				{ "name", JsonValue.CreateStringValue("message") },
+				{ "args", new JsonArray
+					{
+						new JsonObject
+						{
+							{ "method", JsonValue.CreateStringValue("chatMsg") },
+							{ "params", new JsonObject
+								{
+									{ "channel", JsonValue.CreateStringValue(_channel) },
+									{ "name", JsonValue.CreateStringValue(_username) },
+									//{ "nameColor", JsonValue.CreateStringValue("") },
+									{ "text", JsonValue.CreateStringValue(message) }
+								}
+							}
+						}
+					}
+				}
+			}.Stringify());
 		}
 
 		// http://developers.hitbox.tv/#permissions-and-roles
@@ -85,23 +155,23 @@ namespace HitboxUWP8
 			using (DataReader reader = args.GetDataReader())
 			{
 				string read = string.Empty;
-				reader.UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding.Utf8;
+				reader.UnicodeEncoding = UnicodeEncoding.Utf8;
 				read = reader.ReadString(reader.UnconsumedBufferLength);
 
 				switch (read[0])
 				{
-					case '1': // Connected
+					case MessageType.Connected:
 						{
 							_isConnected = true;
 							OnConnected(new EventArgs());
 						}
 						break;
-					case '2': // Echo
+					case MessageType.Echo:
 						{
 							WriteToSocket("2::");
 						}
 						break;
-					case '5': // Interactions
+					case MessageType.Interactions:
 						{
 							JObject response = JObject.Parse(read.Substring(4));
 							JObject content = JObject.Parse(response["args"][0].ToString());
@@ -134,7 +204,11 @@ namespace HitboxUWP8
 						} // Interactions
 						break;
 					default:
-						Debug.WriteLine(read);
+						{
+							Debug.WriteLine(read);
+
+							// TODO: reconnect message
+						}
 						break;
 				} // read[0] switch
 			} // using DataReader
@@ -163,6 +237,12 @@ namespace HitboxUWP8
 		{
 			if (LoggenIn != null)
 				LoggenIn(this, e);
+		}
+
+		protected virtual void OnMessageReceived(ChatMessageReceivedEventArgs e)
+		{
+			if (MessageReceived != null)
+				MessageReceived(this, e);
 		}
 
 		#endregion

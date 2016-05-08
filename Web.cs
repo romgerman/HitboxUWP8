@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Text;
@@ -90,9 +91,9 @@ namespace HitboxUWP8
 
 			if (encoding != null)
 			{
-				if (encoding.Equals("gzip", System.StringComparison.CurrentCultureIgnoreCase))
+				if (encoding.Equals("gzip", StringComparison.CurrentCultureIgnoreCase))
 					responseStream = new GZipStream(responseStream, CompressionMode.Decompress);
-				else if (encoding.Equals("deflate"))
+				else if (encoding.Equals("deflate", StringComparison.CurrentCultureIgnoreCase))
 					responseStream = new DeflateStream(responseStream, CompressionMode.Decompress);
 			}
 

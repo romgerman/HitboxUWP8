@@ -43,7 +43,7 @@ namespace HitboxUWP8
 				throw new ArgumentNullException("key");
 
 			if (secret == null)
-				throw new AggregateException("secret");
+				throw new ArgumentNullException("secret");
 
 			_key	= key;
 			_secret = secret;
@@ -508,10 +508,10 @@ namespace HitboxUWP8
 						{
 							ID      = jgame["category_id"].ToObject<int>(),
 							Name    = jgame["category_name"].ToString(),
-							Viewers = jgame["category_viewers"].ToObject<int>(),
+							Viewers = !jgame["category_viewers"].HasValues ? 0 : jgame["category_viewers"].ToObject<int>(),
 							LogoUrl = jgame["category_logo_large"].ToString(),
 							SeoKey  = jgame["category_seo_key"].ToString(),
-							ChannelCount = jgame["category_media_count"].ToObject<int>(),
+							ChannelCount = !jgame["category_media_count"].HasValues ? 0 : jgame["category_media_count"].ToObject<int>(),
 						});
 					}
 
@@ -533,8 +533,8 @@ namespace HitboxUWP8
 			{
 				ID			 = jmessage["category"]["category_id"].ToObject<int>(),
 				Name		 = jmessage["category"]["category_name"].ToString(),
-				Viewers		 = jmessage["category"]["category_viewers"].ToObject<int>(),
-				ChannelCount = jmessage["category"]["category_media_count"].ToObject<int>(),
+				Viewers		 = !jmessage["category"]["category_viewers"].HasValues ? 0 : jmessage["category"]["category_viewers"].ToObject<int>(),
+				ChannelCount = !jmessage["category"]["category_media_count"].HasValues ? 0 : jmessage["category"]["category_media_count"].ToObject<int>(),
 				LogoUrl		 = jmessage["category"]["category_logo_large"].ToString()
 			};
 		}

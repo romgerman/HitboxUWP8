@@ -30,12 +30,17 @@ namespace HitboxUWP8
 		}
 	}
 
+	public class ChatMessageReceivedEventArgs : EventArgs
+	{
+
+	}
+
 	// Exceptions
 
 	internal static class ExceptionList
 	{
 		public const string NotLoggedIn = "You must be logged in to use this";
-		public const string AuthFailed = "authentication_failed";
+		public const string AuthFailed  = "authentication_failed";
 	}
 
 	public class HitBoxException : Exception
