@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace HitboxUWP8
 {
-	public class HitBoxUser
+	public class HitboxUser
 	{
 		public int	  ID		  { get; set; }
 		public int	  MediaID	  { get; set; }
@@ -19,27 +19,27 @@ namespace HitboxUWP8
 		public string AvatarUrl	{ get; set; }
 		public string CoverUrl	{ get; set; }
 
-		internal HitBoxClientBase _client;
+		internal HitboxClientBase client;
 
-		public async Task<bool> Follow()   => await _client.Follow(Username);
-		public async Task<bool> Unfollow() => await _client.Unfollow(ID);
+		public async Task<bool> Follow()   => await client.Follow(Username);
+		public async Task<bool> Unfollow() => await client.Unfollow(ID);
 
-		public async Task<bool> CheckFollowingStatus() => await HitBoxClientBase.CheckFollowingStatus(Username, _client.User.Username);
+		public async Task<bool> CheckFollowingStatus() => await HitboxClientBase.CheckFollowingStatus(Username, client.User.Username);
 
-		public async Task<int> GetTotalViews() => await HitBoxClientBase.GetTotalViews(Username);
+		public async Task<int> GetTotalViews() => await HitboxClientBase.GetTotalViews(Username);
 
-		public async Task<IList<HitBoxProfilePanel>> GetProfilePanels() => await HitBoxClientBase.GetProfilePanels(Username);
+		public async Task<IList<HitboxProfilePanel>> GetProfilePanels() => await HitboxClientBase.GetProfilePanels(Username);
 	}
 
-	public class HitBoxChannel
+	public class HitboxChannel
 	{
 		public int Videos		{ get; set; }
 		public int Recordings	{ get; set; }
 		public int Teams		{ get; set; }
-		public HitBoxUser User	{ get; set; }
+		public HitboxUser User	{ get; set; }
 	}
 
-	public class HitBoxFollower
+	public class HitboxFollower
 	{
 		public int		UserID	  { get; set; }
 		public string	Username  { get; set; }
@@ -48,28 +48,28 @@ namespace HitboxUWP8
 		public DateTime DateAdded { get; set; }
 	}
 
-	public class HitBoxGame
+	public class HitboxGame
 	{
 		public int	  ID		{ get; set; }
 		public string Name		{ get; set; }
 		public string SeoKey	{ get; set; }
 		public int	  Viewers	{ get; set; }
-		public int ChannelCount { get; set; }
+		public int Channels { get; set; }
 		public string LogoUrl	{ get; set; }
 	}
 
-	public class HitBoxMedia
+	public class HitboxMedia
 	{
 		public int	  ID			 { get; set; }
 		public string Title			 { get; set; }
 		public string MediaFile		 { get; set; }
 		public string ThumbnailUrl   { get; set; }
-		public HitBoxChannel Channel { get; set; }
-		public HitBoxGame	 Game	 { get; set; }
-		public IList<HitBoxMediaProfile> Profiles { get; set; }
+		public HitboxChannel Channel { get; set; }
+		public HitboxGame	 Game	 { get; set; }
+		public IList<HitboxMediaProfile> Profiles { get; set; }
 	}
 
-	public class HitBoxLivestream : HitBoxMedia
+	public class HitboxLivestream : HitboxMedia
 	{
 		public int	Viewers			  { get; set; }
 		public bool IsLive			  { get; set; }
@@ -77,7 +77,7 @@ namespace HitboxUWP8
 		public List<string> Countries { get; set; }
 	}
 
-	public class HitBoxVideo : HitBoxMedia
+	public class HitboxVideo : HitboxMedia
 	{
 		public string	Description	{ get; set; }
 		public DateTime DateAdded	{ get; set; }
@@ -85,14 +85,14 @@ namespace HitboxUWP8
 		public int		Views		{ get; set; }
 	}
 
-	public class HitBoxMediaProfile
+	public class HitboxMediaProfile
 	{
 		public string Url  { get; set; }
 		public int Height  { get; set; }
 		public int Bitrate { get; set; }
 	}
 
-	public enum HitBoxRole
+	public enum HitboxRole
 	{
 		/// <summary>"You are a unregistered user. You cannot write in chat and any messages you send will be dropped. User list is also disallowed"</summary>
 		Guest,
@@ -104,24 +104,24 @@ namespace HitboxUWP8
 		Admin
 	}
 
-	public class HitBoxAccessLevels
+	public class HitboxAccessLevels
 	{
 		public int UserID				{ get; set; }
 		public int AccessUserID			{ get; set; }
-		public HitBoxRole Settings		{ get; set; }
-		public HitBoxRole Account		{ get; set; }
-		public HitBoxRole Livestreams	{ get; set; }
-		public HitBoxRole Broadcast		{ get; set; }
-		public HitBoxRole Videos		{ get; set; }
-		public HitBoxRole Recordings	{ get; set; }
-		public HitBoxRole Statistics	{ get; set; }
-		public HitBoxRole Inbox			{ get; set; }
-		public HitBoxRole Revenues		{ get; set; }
-		public HitBoxRole Chat			{ get; set; }
-		public HitBoxRole Following		{ get; set; }
-		public HitBoxRole Teams			{ get; set; }
-		public HitBoxRole Subscriptions	{ get; set; }
-		public HitBoxRole Payments		{ get; set; }
+		public HitboxRole Settings		{ get; set; }
+		public HitboxRole Account		{ get; set; }
+		public HitboxRole Livestreams	{ get; set; }
+		public HitboxRole Broadcast		{ get; set; }
+		public HitboxRole Videos		{ get; set; }
+		public HitboxRole Recordings	{ get; set; }
+		public HitboxRole Statistics	{ get; set; }
+		public HitboxRole Inbox			{ get; set; }
+		public HitboxRole Revenues		{ get; set; }
+		public HitboxRole Chat			{ get; set; }
+		public HitboxRole Following		{ get; set; }
+		public HitboxRole Teams			{ get; set; }
+		public HitboxRole Subscriptions	{ get; set; }
+		public HitboxRole Payments		{ get; set; }
 		public bool IsSubscriber		{ get; set; }
 		public bool IsFollower			{ get; set; }
 
@@ -130,27 +130,27 @@ namespace HitboxUWP8
 		//public void Partner { get; set; }
 	}
 
-	public class HitBoxCommBreak
+	public class HitboxCommBreak
 	{
 		public int		Count	  { get; set; }
 		public string	Delay	  { get; set; } // TODO: delay in CommBreak
 		public DateTime Timestamp { get; set; }
 	}
 
-	public class HitBoxLastCommBreak
+	public class HitboxLastCommBreak
 	{
 		public int Count	  { get; set; }
 		public int SecondsAgo { get; set; }
 		public int Timeout	  { get; set; }
 	}
 
-	public class HitBoxMediaStatus
+	public class HitboxMediaStatus
 	{
 		public bool IsLive { get; set; }
 		public int Viewers { get; set; }
 	}
 
-	public class HitBoxProfilePanel
+	public class HitboxProfilePanel
 	{
 		public int	  ID		{ get; set; }
 		public string Headline	{ get; set; }

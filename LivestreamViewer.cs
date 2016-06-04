@@ -10,7 +10,7 @@ using Newtonsoft.Json.Linq;
 namespace HitboxUWP8
 {
 	/// <summary>TODO: HitBoxLivestreamViewer info</summary>
-	public class HitBoxLivestreamViewer // TODO: exceptions and comments
+	public class HitboxLivestreamViewer // TODO: exceptions and comments
 	{
 		public class Parameters
 		{
@@ -30,7 +30,7 @@ namespace HitboxUWP8
 
 		private Parameters _params;
 
-		internal HitBoxLivestreamViewer(Parameters parameters)
+		internal HitboxLivestreamViewer(Parameters parameters)
 		{
 			_params = parameters;
 			_socket = new MessageWebSocket();
@@ -45,14 +45,14 @@ namespace HitboxUWP8
 		{
 			if (_isWatching)
 			{
-				throw new HitBoxException("already working");
+				throw new HitboxException("already working");
 			}
 			else
 			{
 				if(_params.Channel == string.Empty)
-					throw new HitBoxException("you must enter channel name");
+					throw new HitboxException("you must enter channel name");
 
-				string socketUrl = (await HitBoxClientBase.GetViewerServers())[0];
+				string socketUrl = (await HitboxClientBase.GetViewerServers())[0];
 
 				try
 				{
@@ -94,7 +94,7 @@ namespace HitboxUWP8
 						{
 							OnStatusChanged(new ViewerStatusChangedArgs
 							{
-								Status = new HitBoxMediaStatus
+								Status = new HitboxMediaStatus
 								{
 									IsLive = jmessage["params"]["online"].ToObject<bool>(),
 									Viewers = jmessage["params"]["viewers"].ToObject<int>()
@@ -135,7 +135,7 @@ namespace HitboxUWP8
 		public void Stop()
 		{
 			if (!_isWatching)
-				throw new HitBoxException("nothing is started");
+				throw new HitboxException("nothing is started");
 			else
 			{
 				_socket.Close(1000, string.Empty);

@@ -15,16 +15,16 @@ namespace HitboxUWP8
 
 	public class ViewerStatusChangedArgs : EventArgs
 	{
-		public HitBoxMediaStatus Status { get; set; }
+		public HitboxMediaStatus Status { get; set; }
 		public int Followers   { get; set; }
 		public int Subscribers { get; set; }
 	}
 
 	public class ChatLoggedInEventArgs : EventArgs
 	{
-		public HitBoxRole Role { get; set; }
+		public HitboxRole Role { get; set; }
 
-		public ChatLoggedInEventArgs(HitBoxRole role)
+		public ChatLoggedInEventArgs(HitboxRole role)
 		{
 			Role = role;
 		}
@@ -43,9 +43,9 @@ namespace HitboxUWP8
 		public const string AuthFailed  = "authentication_failed";
 	}
 
-	public class HitBoxException : Exception
+	public class HitboxException : Exception
 	{
-		public HitBoxException() { }
-		public HitBoxException(string message) : base(message) { }
+		public HitboxException() { }
+		public HitboxException(string message) : base(message) { }
 	}
 }

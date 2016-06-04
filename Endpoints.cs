@@ -1,6 +1,6 @@
 ﻿namespace HitboxUWP8
 {
-	public static class HitBoxEndpoint
+	public static class HitboxEndpoint
 	{
 		public const string ImageStorage	= "http://edge.sf.hitbox.tv/";
 
@@ -14,6 +14,7 @@
 		public const string CommercialBreak = Api + "ws/combreak/";
 		public const string TwitterPost		= Api + "twitter/post";
 		public const string FacebookPost	= Api + "facebook/post";
+		public const string EmailVerified   = Api + User + "checkVerifiedEmail/";
 
 		public const string AccessLevels	= User + "access/";
 
@@ -41,7 +42,7 @@
 		internal const string LivestreamViewer = "ws://{url}/viewer";
 	}
 
-	public static class Url
+	public static class HitboxUrl
 	{
 		public const string Home   = "http://www.hitbox.tv/";
 		public const string Browse = Home + "browse/";

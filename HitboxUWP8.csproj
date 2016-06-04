@@ -42,6 +42,7 @@
     <Compile Include="Endpoints.cs" />
     <Compile Include="EventHandlers.cs" />
     <Compile Include="Chat.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="LivestreamViewer.cs" />
     <Compile Include="HitboxObjects.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

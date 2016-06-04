@@ -11,7 +11,7 @@ using Newtonsoft.Json.Linq;
 namespace HitboxUWP8
 {
 	/// <summary>Chat</summary>
-	public class HitBoxChat // DOTO: chat connection timeout. "If you cannot connect after 8 seconds you should grab another server and connection ID."
+	public class HitboxChat // DOTO: chat connection timeout. "If you cannot connect after 8 seconds you should grab another server and connection ID."
 	{
 		/// <summary>Occurs when user has been connected to a chat</summary>
 		public event EventHandler Connected;
@@ -37,11 +37,11 @@ namespace HitboxUWP8
 		private string _username;
 		private string _channel;
 
-		private HitBoxRole _role = HitBoxRole.Guest;
+		private HitboxRole _role = HitboxRole.Guest;
 
-		public HitBoxChat()	{ }
+		public HitboxChat()	{ }
 
-		private HitBoxChat(string token, string username)
+		private HitboxChat(string token, string username)
 		{
 			_token = token;
 			_username = username;
@@ -57,10 +57,10 @@ namespace HitboxUWP8
 			_socket.MessageReceived += _socket_MessageReceived;
 			_socket.Closed += _socket_Closed;
 
-			IList<string> servers = await HitBoxClientBase.GetChatServers();
+			IList<string> servers = await HitboxClientBase.GetChatServers();
 
 			string serverUrl = servers[0];
-			string webSocketID  = await HitBoxClientBase.GetChatServerSocketID(serverUrl);
+			string webSocketID  = await HitboxClientBase.GetChatServerSocketID(serverUrl);
 			string connectionUrl = "ws://" + serverUrl + "/socket.io/1/websocket/" + webSocketID;
 
 			await _socket.ConnectAsync(new Uri(connectionUrl));
@@ -82,7 +82,7 @@ namespace HitboxUWP8
 		public void Login(string channel)
 		{
 			if (!_isConnected)
-				throw new HitBoxException();
+				throw new HitboxException();
 
 			if(!_isLoggedIn)
 			{
@@ -121,7 +121,7 @@ namespace HitboxUWP8
 		public void SendMessage(string message)
 		{
 			if (!_isLoggedIn)
-				throw new HitBoxException(ExceptionList.NotLoggedIn);
+				throw new HitboxException(ExceptionList.NotLoggedIn);
 
 			if (message == null)
 				throw new ArgumentNullException("message");
@@ -183,16 +183,16 @@ namespace HitboxUWP8
 										switch(content["params"]["role"].ToString())
 										{
 											case "guest":
-												_role = HitBoxRole.Guest;
+												_role = HitboxRole.Guest;
 												break;
 											case "anon":
-												_role = HitBoxRole.Anon;
+												_role = HitboxRole.Anon;
 												break;
 											case "user":
-												_role = HitBoxRole.User;
+												_role = HitboxRole.User;
 												break;
 											case "admin":
-												_role = HitBoxRole.Admin;
+												_role = HitboxRole.Admin;
 												break;
 										}
 

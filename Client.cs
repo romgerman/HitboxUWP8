@@ -1,26 +1,36 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System;
 
 namespace HitboxUWP8
 {
 	/// <summary>Main class that you should use</summary>
-	public class HitBoxClient : HitBoxClientBase
+	public class HitboxClient : HitboxClientBase
 	{
-		public HitBoxClient(string key, string secret) : base(key, secret) { }
+		public HitboxClient(string key, string secret) : base(key, secret) { }
 
 		// TODO: methods with HitBoxObjects
 
-		public async Task<IList<HitBoxFollower>> GetFollowers(int offset = 0, int limit = 10)
+		/// <summary>Create a new LivestreamViewer</summary>
+		/// <param name="auth">If not true, then you are viewing a livestream as guest/anonymous</param>
+		public HitboxLivestreamViewer CreateLivestreamViewer(string channel, bool auth = false)
 		{
-			if (!_isLoggedIn)
-				throw new HitBoxException(ExceptionList.NotLoggedIn);
+			if (channel == null)
+				throw new ArgumentNullException("channel");
 
-			return await GetFollowers(User.Username, offset, limit);
-		}
+			if (!isLoggedIn && auth)
+				throw new HitboxException(ExceptionList.NotLoggedIn);
 
-		public async Task<IList<HitBoxFollower>> GetFollowing(int offset = 0, int limit = 10)
-		{
-			return await GetFollowing(User.Username, offset, limit);
+			if (auth)
+				return new HitboxLivestreamViewer(new HitboxLivestreamViewer.Parameters
+				{
+					Channel = channel,
+					Username = User.Username,
+					Token = authOrAccessToken
+				});
+
+			return new HitboxLivestreamViewer(new HitboxLivestreamViewer.Parameters
+			{
+				Channel = channel
+			});
 		}
 	}
 }

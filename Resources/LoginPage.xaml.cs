@@ -6,7 +6,7 @@ namespace HitboxUWP8
 {
 	public sealed partial class LoginPage : Page
 	{
-		private HitBoxClientBase _client;
+		private HitboxClientBase _client;
 
 		public LoginPage()
 		{
@@ -20,9 +20,9 @@ namespace HitboxUWP8
 			object[] parameters = (object[])e.Parameter;
 
 			bool forceLogin = (bool)parameters[0];
-			_client = (HitBoxClientBase)parameters[1];
+			_client = (HitboxClientBase)parameters[1];
 
-			browser.Source = new Uri(HitBoxEndpoint.Login + "?" + (forceLogin ? "force_auth=true&" : "") + "app_token=" + _client._key, UriKind.Absolute);
+			browser.Source = new Uri(HitboxEndpoint.Login + "?" + (forceLogin ? "force_auth=true&" : "") + "app_token=" + _client.appKey, UriKind.Absolute);
 		}
 
 		private async void browser_LoadCompleted(object sender, NavigationEventArgs args)
@@ -43,25 +43,25 @@ namespace HitboxUWP8
 			}
 			else if (url.StartsWith("?request_token=", StringComparison.CurrentCultureIgnoreCase))
 			{
-				_client._authOrAccessToken = await _client.GetAccessToken(url.Substring(15));
+				_client.authOrAccessToken = await _client.GetAccessToken(url.Substring(15));
 
-				_client.User = await _client.GetUser(await _client.GetUserFromToken(_client._authOrAccessToken), true);
+				_client.User = await _client.GetUser(await _client.GetUserFromToken(_client.authOrAccessToken), true);
 
-				_client.OnLoggedIn(new LoginEventArgs() { Token = _client._authOrAccessToken, State = LoginEventArgs.States.OK, Method = LoginEventArgs.Methods.FirstLogin });
+				_client.OnLoggedIn(new LoginEventArgs() { Token = _client.authOrAccessToken, State = LoginEventArgs.States.OK, Method = LoginEventArgs.Methods.FirstLogin });
 
-				_client._isLoggedIn = true;
+				_client.isLoggedIn = true;
 
 				isDone = true;
 			}
 			else if (url.StartsWith("?authToken=", StringComparison.CurrentCultureIgnoreCase))
 			{
-				_client._authOrAccessToken = url.Substring(11);
+				_client.authOrAccessToken = url.Substring(11);
 
-				_client.User = await _client.GetUser(await _client.GetUserFromToken(_client._authOrAccessToken), true);
+				_client.User = await _client.GetUser(await _client.GetUserFromToken(_client.authOrAccessToken), true);
 
-				_client.OnLoggedIn(new LoginEventArgs() { Token = _client._authOrAccessToken, State = LoginEventArgs.States.OK, Method = LoginEventArgs.Methods.FirstLogin });
+				_client.OnLoggedIn(new LoginEventArgs() { Token = _client.authOrAccessToken, State = LoginEventArgs.States.OK, Method = LoginEventArgs.Methods.FirstLogin });
 
-				_client._isLoggedIn = true;
+				_client.isLoggedIn = true;
 
 				isDone = true;
 			}
