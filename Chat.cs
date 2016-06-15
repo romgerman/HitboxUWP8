@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
+#if DEBUG
+using System.Diagnostics;
+#endif
+
 using Windows.Data.Json;
 using Windows.Networking.Sockets;
 using Windows.Storage.Streams;
@@ -205,7 +208,9 @@ namespace HitboxUWP8
 						break;
 					default:
 						{
+#if DEBUG
 							Debug.WriteLine(read);
+#endif
 
 							// TODO: reconnect message
 						}
@@ -225,27 +230,24 @@ namespace HitboxUWP8
 			await _writer.StoreAsync();
 		}
 
-		#region Handlers
+#region Handlers
 
 		protected virtual void OnConnected(EventArgs e)
 		{
-			if (Connected != null)
-				Connected(this, e);
+			Connected?.Invoke(this, e);
 		}
 
 		protected virtual void OnLoggedIn(ChatLoggedInEventArgs e)
 		{
-			if (LoggenIn != null)
-				LoggenIn(this, e);
+			LoggenIn?.Invoke(this, e);
 		}
 
 		protected virtual void OnMessageReceived(ChatMessageReceivedEventArgs e)
 		{
-			if (MessageReceived != null)
-				MessageReceived(this, e);
+			MessageReceived?.Invoke(this, e);
 		}
 
-		#endregion
+#endregion
 
 	}
 }

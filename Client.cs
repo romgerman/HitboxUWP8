@@ -20,17 +20,9 @@ namespace HitboxUWP8
 				throw new HitboxException(ExceptionList.NotLoggedIn);
 
 			if (auth)
-				return new HitboxLivestreamViewer(new HitboxLivestreamViewer.Parameters
-				{
-					Channel = channel,
-					Username = User.Username,
-					Token = authOrAccessToken
-				});
+				return new HitboxLivestreamViewer(channel, User.Username, authOrAccessToken);
 
-			return new HitboxLivestreamViewer(new HitboxLivestreamViewer.Parameters
-			{
-				Channel = channel
-			});
+			return new HitboxLivestreamViewer(channel);
 		}
 	}
 }

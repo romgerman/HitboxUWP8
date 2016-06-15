@@ -1,5 +1,7 @@
 ﻿using System;
+#if DEBUG
 using System.Diagnostics;
+#endif
 
 using Windows.Data.Json;
 using Windows.Networking.Sockets;
@@ -9,58 +11,60 @@ using Newtonsoft.Json.Linq;
 
 namespace HitboxUWP8
 {
-	/// <summary>TODO: HitBoxLivestreamViewer info</summary>
-	public class HitboxLivestreamViewer // TODO: exceptions and comments
+	/// <summary>Class for "viewing" a channel</summary>
+	public class HitboxLivestreamViewer
 	{
-		public class Parameters
-		{
-			public string Channel	= string.Empty;
-			public string Username	= string.Empty;
-			public string Token		= string.Empty;
-		}
-
 		/// <summary>Occurs when viewers/followers/subscribers count changes or livestream goes offline/online</summary>
 		public event EventHandler<ViewerStatusChangedArgs> StatusChanged;
 
 		private const string url = "/viewer";
 
-		private MessageWebSocket _socket;
-		private DataWriter _writer;
-		private bool _isWatching;
+		private MessageWebSocket socket;
+		private DataWriter writer;
+		private bool isWatching;
 
-		private Parameters _params;
+		public string channel;
+		public string username;
+		public string token;
 
-		internal HitboxLivestreamViewer(Parameters parameters)
+		internal HitboxLivestreamViewer(string channel, string username = "", string token = "")
 		{
-			_params = parameters;
-			_socket = new MessageWebSocket();
-			_writer = new DataWriter(_socket.OutputStream);
+			this.channel  = channel;
+			this.username = username;
+			this.token = token;
 
-			_socket.Control.MessageType = SocketMessageType.Utf8;
-			_socket.MessageReceived += socket_MessageReceived;
-			_socket.Closed += socket_Closed;
+			socket = new MessageWebSocket();
+			writer = new DataWriter(socket.OutputStream);
+
+			socket.Control.MessageType = SocketMessageType.Utf8;
+			socket.MessageReceived += socket_MessageReceived;
+			socket.Closed += socket_Closed;
 		}
 
 		public async void Watch()
 		{
-			if (_isWatching)
+			if (isWatching)
 			{
 				throw new HitboxException("already working");
 			}
 			else
 			{
-				if(_params.Channel == string.Empty)
+				if(channel == string.Empty)
 					throw new HitboxException("you must enter channel name");
 
 				string socketUrl = (await HitboxClientBase.GetViewerServers())[0];
 
 				try
 				{
-					await _socket.ConnectAsync(new Uri("ws://" + socketUrl + url));
+					await socket.ConnectAsync(new Uri("ws://" + socketUrl + url));
 				}
 				catch(Exception e)
 				{
+#if DEBUG
 					Debug.WriteLine("Viewer: " + e.ToString());
+#else
+					throw;
+#endif
 				}
 				
 				WriteToSocket(new JsonObject
@@ -68,14 +72,15 @@ namespace HitboxUWP8
 					{ "method", JsonValue.CreateStringValue("joinChannel") },
 					{ "params", new JsonObject
 						{
-							{ "channel", JsonValue.CreateStringValue(_params.Channel) },
-							{ "name", JsonValue.CreateStringValue(_params.Username) },
-							{ "token", JsonValue.CreateStringValue(_params.Token) },
-							{ "uuid", JsonValue.CreateStringValue(Guid.NewGuid().ToString()) }
+							{ "channel", JsonValue.CreateStringValue(channel) },
+							{ "name",    JsonValue.CreateStringValue(username) },
+							{ "token",   JsonValue.CreateStringValue(token) },
+							{ "uuid",    JsonValue.CreateStringValue(Guid.NewGuid().ToString()) }
 						}
 					}
 				}.Stringify());
-				_isWatching = true;
+
+				isWatching = true;
 			}
 		}
 		
@@ -96,10 +101,10 @@ namespace HitboxUWP8
 							{
 								Status = new HitboxMediaStatus
 								{
-									IsLive = jmessage["params"]["online"].ToObject<bool>(),
+									IsLive  = jmessage["params"]["online"].ToObject<bool>(),
 									Viewers = jmessage["params"]["viewers"].ToObject<int>()
 								},
-								Followers = jmessage["params"]["followers"].ToObject<int>(),
+								Followers   = jmessage["params"]["followers"].ToObject<int>(),
 								Subscribers = jmessage["params"]["subscribers"].ToObject<int>()
 							});
 						}
@@ -110,7 +115,9 @@ namespace HitboxUWP8
 						}
 						break;
 					default:
+#if DEBUG
 						Debug.WriteLine(jmessage.ToString());
+#endif
 						break;
 				}
 			}
@@ -123,23 +130,23 @@ namespace HitboxUWP8
 				
 			}
 
+#if DEBUG
 			Debug.WriteLine("LivestreamViewer: " + args.Code.ToString());
+#endif
 		}
 
 		private async void WriteToSocket(string message)
 		{
-			_writer.WriteString(message);
-			await _writer.StoreAsync();
+			writer.WriteString(message);
+			await writer.StoreAsync();
 		}
 
 		public void Stop()
 		{
-			if (!_isWatching)
-				throw new HitboxException("nothing is started");
-			else
+			if (isWatching)
 			{
-				_socket.Close(1000, string.Empty);
-				_isWatching = false;
+				socket.Close(1000, string.Empty);
+				isWatching = false;
 			}
 		}
 
@@ -147,8 +154,7 @@ namespace HitboxUWP8
 
 		protected virtual void OnStatusChanged(ViewerStatusChangedArgs e)
 		{
-			if (StatusChanged != null)
-				StatusChanged(this, e);
+			StatusChanged?.Invoke(this, e);
 		}
 	}
 }

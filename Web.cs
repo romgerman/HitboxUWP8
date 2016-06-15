@@ -78,13 +78,13 @@ namespace HitboxUWP8
 			//}
 			//catch (WebException e)
 			//{
-				//using (HttpWebResponse response = (HttpWebResponse)e.Response)
-				//{
-					//using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
-					//{
-						//return reader.ReadToEnd();
-					//}
-				//}
+			//	using (HttpWebResponse response = (HttpWebResponse)e.Response)
+			//	{
+			//		using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
+			//		{
+			//			return reader.ReadToEnd();
+			//		}
+			//	}
 			//}
 		}
 

@@ -3,7 +3,9 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+#if DEBUG
 using System.Diagnostics;
+#endif
 
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml;
@@ -66,7 +68,7 @@ namespace HitboxUWP8
 		public void Login(bool force = false)
 		{
 			if(!isLoggedIn)
-				(Window.Current.Content as Frame).Navigate(typeof(LoginPage), new object[2] { force, this });
+				(Window.Current.Content as Frame).Navigate(typeof(LoginPage), new object[] { force, this });
 		}
 
 		/// <summary>Login with auth or access token</summary>
@@ -79,11 +81,9 @@ namespace HitboxUWP8
 			if (authOrAccessToken == null)
 				throw new ArgumentNullException("authOrAccessToken");
 
-			string response = await Web.GET(HitboxEndpoint.TokenValidation + appKey + "?token=" + authOrAccessToken);
+			string username = await GetUserFromToken(authOrAccessToken);
 
-			bool error = JObject.Parse(response)["error"].ToObject<bool>();
-
-			if (error)
+			if (username == null)
 			{
 				OnLoggedIn(new LoginEventArgs { Method = LoginEventArgs.Methods.Another, State = LoginEventArgs.States.InvalidToken });
 				return;
@@ -91,7 +91,7 @@ namespace HitboxUWP8
 
 			this.authOrAccessToken = authOrAccessToken;
 
-			User = await GetUser(await GetUserFromToken(this.authOrAccessToken), true);
+			User = await GetUser(username, true);
 
 			isLoggedIn = true;
 
@@ -141,10 +141,10 @@ namespace HitboxUWP8
 		}
 
 		/// <summary>Check if the user token is valid</summary>
-		public async Task<bool> CheckUserToken()
+		private async Task<bool> CheckUserToken(string authOrAccessToken) // MAYBE: why it isn't working?
 		{
-			if (!isLoggedIn)
-				throw new HitboxException(ExceptionList.NotLoggedIn);
+			if (authOrAccessToken == null)
+				throw new ArgumentNullException("authOrAccessToken");
 
 			JObject jmessage = JObject.Parse(await Web.GET(HitboxEndpoint.TokenValidation + appKey + "?token=" + authOrAccessToken));
 
@@ -167,7 +167,7 @@ namespace HitboxUWP8
 			if (jmessage["user_name"].IsNull())
 				return null;
 
-			return new HitboxUser()
+			return new HitboxUser
 			{
 				ID = jmessage["user_id"].ToObject<int>(),
 				Username  = jmessage["user_name"].ToString(),
@@ -214,13 +214,13 @@ namespace HitboxUWP8
 			JObject jmessage = JObject.Parse(await Web.GET(HitboxEndpoint.AccessLevels + channel + "/" + (authOrAccessToken ?? "")));
 
 			if (jmessage["user_id"].IsNull())
-				return new HitboxAccessLevels()
+				return new HitboxAccessLevels
 				{
 					IsFollower   = jmessage["isFollower"].ToObject<bool>(),
 					IsSubscriber = jmessage["isSubscriber"].ToObject<bool>()
 				};
 
-			return new HitboxAccessLevels()
+			return new HitboxAccessLevels
 			{
 				UserID = jmessage["user_id"].ToObject<int>(),
 				AccessUserID = jmessage["access_user_id"].ToObject<int>(),
@@ -289,7 +289,7 @@ namespace HitboxUWP8
 			if (channel == null)
 				throw new ArgumentNullException("channel");
 
-			JObject jmessage = JObject.Parse(await Web.POST(HitboxEndpoint.CommercialBreak + channel + "/" + amount, new JsonObject()
+			JObject jmessage = JObject.Parse(await Web.POST(HitboxEndpoint.CommercialBreak + channel + "/" + amount, new JsonObject
 			{
 				{ "user_name", JsonValue.CreateStringValue(User.Username) },
 				{ "authToken", JsonValue.CreateStringValue(authOrAccessToken) }
@@ -318,11 +318,11 @@ namespace HitboxUWP8
 			if (jmessage["seconds_ago"].IsNull())
 				return null;
 
-			return new HitboxLastCommBreak()
+			return new HitboxLastCommBreak
 			{
-				Count		= jmessage["ad_count"].ToObject<int>(),
-				SecondsAgo	= jmessage["seconds_ago"].ToObject<int>(),
-				Timeout		= jmessage["timeout"].ToObject<int>()
+				Count	   = jmessage["ad_count"].ToObject<int>(),
+				SecondsAgo = jmessage["seconds_ago"].ToObject<int>(),
+				Timeout	   = jmessage["timeout"].ToObject<int>()
 			};
 		}
 
@@ -350,10 +350,10 @@ namespace HitboxUWP8
 				panels.Add(new HitboxProfilePanel
 				{
 					ID = jpanel["id"].ToObject<int>(),
-					Headline = jpanel["headline"].ToString(),
-					Content = jpanel["content"].ToString(),
+					Headline  = jpanel["headline"].ToString(),
+					Content   = jpanel["content"].ToString(),
 					ImageLink = jpanel["link"].ToString(),
-					ImageUrl = jpanel["image"].ToString()
+					ImageUrl  = jpanel["image"].ToString()
 				});
 			}
 
@@ -372,7 +372,7 @@ namespace HitboxUWP8
 			if (message == null)
 				throw new ArgumentNullException("message");
 
-			JObject jmessage = JObject.Parse(await Web.POST(HitboxEndpoint.TwitterPost + "?authToken=" + authOrAccessToken + "&user_name=" + User.Username, new JsonObject()
+			JObject jmessage = JObject.Parse(await Web.POST(HitboxEndpoint.TwitterPost + "?authToken=" + authOrAccessToken + "&user_name=" + User.Username, new JsonObject
 			{
 				{ "user_name", JsonValue.CreateStringValue(User.Username) },
 				{ "authToken", JsonValue.CreateStringValue(authOrAccessToken) },
@@ -395,7 +395,7 @@ namespace HitboxUWP8
 			if (message == null)
 				throw new ArgumentNullException("message");
 
-			JObject jmessage = JObject.Parse(await Web.POST(HitboxEndpoint.FacebookPost + "?authToken=" + authOrAccessToken + "&user_name=" + User.Username, new JsonObject()
+			JObject jmessage = JObject.Parse(await Web.POST(HitboxEndpoint.FacebookPost + "?authToken=" + authOrAccessToken + "&user_name=" + User.Username, new JsonObject
 			{
 				{ "user_name", JsonValue.CreateStringValue(User.Username) },
 				{ "authToken", JsonValue.CreateStringValue(authOrAccessToken) },
@@ -804,7 +804,7 @@ namespace HitboxUWP8
 
 					foreach (JObject jfollower in jmessage["followers"])
 					{
-						followers.Add(new HitboxFollower()
+						followers.Add(new HitboxFollower
 						{
 							UserID    = jfollower["user_id"].ToObject<int>(),
 							Username  = jfollower["user_name"].ToString(),
@@ -840,7 +840,7 @@ namespace HitboxUWP8
 
 					foreach (JObject jfollower in jmessage["following"])
 					{
-						following.Add(new HitboxFollower()
+						following.Add(new HitboxFollower
 						{
 							UserID    = jfollower["user_id"].ToObject<int>(),
 							Username  = jfollower["user_name"].ToString(),
@@ -884,7 +884,7 @@ namespace HitboxUWP8
 			if (usernameOrUserID == null)
 				throw new ArgumentNullException("usernameOrUserID");
 
-			JObject jmessage = JObject.Parse(await Web.POST(HitboxEndpoint.Follow + "?authToken=" + authOrAccessToken, new JsonObject()
+			JObject jmessage = JObject.Parse(await Web.POST(HitboxEndpoint.Follow + "?authToken=" + authOrAccessToken, new JsonObject
 			{
 				{ "type", JsonValue.CreateStringValue("user") },
 				{ "follow_id", JsonValue.CreateStringValue(usernameOrUserID) }
@@ -945,13 +945,13 @@ namespace HitboxUWP8
 
 					foreach (JObject jgame in jmessage["categories"])
 					{
-						games.Add(new HitboxGame()
+						games.Add(new HitboxGame
 						{
-							ID      = jgame["category_id"].ToObject<int>(),
-							Name    = jgame["category_name"].ToString(),
-							Viewers = jgame["category_viewers"].IsNull() ? 0 : jgame["category_viewers"].ToObject<int>(),
-							LogoUrl = jgame["category_logo_large"].ToString(),
-							SeoKey  = jgame["category_seo_key"].ToString(),
+							ID       = jgame["category_id"].ToObject<int>(),
+							Name     = jgame["category_name"].ToString(),
+							Viewers  = jgame["category_viewers"].IsNull() ? 0 : jgame["category_viewers"].ToObject<int>(),
+							LogoUrl  = jgame["category_logo_large"].ToString(),
+							SeoKey   = jgame["category_seo_key"].ToString(),
 							Channels = jgame["category_media_count"].IsNull() ? 0 : jgame["category_media_count"].ToObject<int>(),
 						});
 					}
@@ -963,20 +963,21 @@ namespace HitboxUWP8
 
 		/// <summary>Get game with specified id</summary>
 		/// <returns>Returns null if game was not found</returns>
-		public static async Task<HitboxGame> GetGame(string id)
+		public static async Task<HitboxGame> GetGame(int id)
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitboxEndpoint.Game + id));
 
 			if (jmessage["category"] == null)
 				return null;
 
-			return new HitboxGame()
+			return new HitboxGame
 			{
-				ID			 = jmessage["category"]["category_id"].ToObject<int>(),
-				Name		 = jmessage["category"]["category_name"].ToString(),
-				Viewers		 = jmessage["category"]["category_viewers"].IsNull() ? 0 : jmessage["category"]["category_viewers"].ToObject<int>(),
+				ID		 = jmessage["category"]["category_id"].ToObject<int>(),
+				Name	 = jmessage["category"]["category_name"].ToString(),
+				Viewers	 = jmessage["category"]["category_viewers"].IsNull() ? 0 : jmessage["category"]["category_viewers"].ToObject<int>(),
 				Channels = jmessage["category"]["category_media_count"].IsNull() ? 0 : jmessage["category"]["category_media_count"].ToObject<int>(),
-				LogoUrl		 = jmessage["category"]["category_logo_large"].ToString()
+				LogoUrl	 = jmessage["category"]["category_logo_large"].ToString(),
+				SeoKey   = jmessage["category"]["category_seo_key"].ToString()
 			};
 		}
 
@@ -990,9 +991,7 @@ namespace HitboxUWP8
 			IList<string> servers = new List<string>();
 
 			foreach(JToken jserver in jmessage)
-			{
 				servers.Add(jserver["server_ip"].ToString());
-			}
 
 			return servers;
 		}
@@ -1005,9 +1004,7 @@ namespace HitboxUWP8
 			IList<string> servers = new List<string>();
 
 			foreach (JToken jserver in jmessage)
-			{
 				servers.Add(jserver["server_ip"].ToString());
-			}
 
 			return servers;
 		}
@@ -1028,10 +1025,8 @@ namespace HitboxUWP8
 
 			IList<string> colors = new List<string>(100);
 
-			foreach(JToken jcolor in jmessage["colors"])
-			{
+			foreach (JToken jcolor in jmessage["colors"])
 				colors.Add(jcolor.ToString());
-			}
 
 			return colors;
 		}
@@ -1049,10 +1044,9 @@ namespace HitboxUWP8
 
 		protected internal virtual void OnLoggedIn(LoginEventArgs e)
 		{
-			if (LoggedIn != null)
-				LoggedIn(this, e);
+			LoggedIn?.Invoke(this, e);
 		}
 
-#endregion
+		#endregion
 	}
 }
