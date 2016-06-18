@@ -5,6 +5,7 @@ namespace HitboxUWP8
 	/// <summary>Main class that you should use</summary>
 	public class HitboxClient : HitboxClientBase
 	{
+		public HitboxClient() : base() { }
 		public HitboxClient(string key, string secret) : base(key, secret) { }
 
 		// TODO: methods with HitBoxObjects

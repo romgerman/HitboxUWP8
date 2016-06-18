@@ -308,7 +308,7 @@ namespace HitboxUWP8
 
 		/// <summary>Get last commecrial break for specified channel</summary>
 		/// <returns>Returns null if channel never run ads</returns>
-		public static async Task<HitboxLastCommBreak> GetLastCommercialBreak(string channel)
+		public async Task<HitboxLastCommBreak> GetLastCommercialBreak(string channel)
 		{
 			if (channel == null)
 				throw new ArgumentNullException("channel");
@@ -333,7 +333,7 @@ namespace HitboxUWP8
 
 		/// <summary>Get list of user profile panels</summary>
 		/// <returns>Null if user have no panels or the panels are made through old editor</returns>
-		public static async Task<IList<HitboxProfilePanel>> GetProfilePanels(string channel)
+		public async Task<IList<HitboxProfilePanel>> GetProfilePanels(string channel)
 		{
 			if (channel == null)
 				throw new ArgumentNullException("channel");
@@ -581,7 +581,7 @@ namespace HitboxUWP8
 
 		/// <summary>Get media status and viewer count for a channel</summary>
 		/// <returns>Null if channel is not live</returns>
-		public static async Task<HitboxMediaStatus> MediaStatus(string channel)
+		public async Task<HitboxMediaStatus> MediaStatus(string channel)
 		{
 			if (channel == null)
 				throw new ArgumentNullException("channel");
@@ -599,7 +599,7 @@ namespace HitboxUWP8
 		}
 
 		/// <summary>Get total views for channel</summary>
-		public static async Task<int> GetTotalViews(string channel)
+		public async Task<int> GetTotalViews(string channel)
 		{
 			if (channel == null)
 				throw new ArgumentNullException("channel");
@@ -784,7 +784,7 @@ namespace HitboxUWP8
 		// TODO: Recordings
 
 		/// <summary>Get list of followers for specified channel</summary>
-		public static async Task<IList<HitboxFollower>> GetFollowers(string channel, int offset = 0, int limit = 10)
+		public async Task<IList<HitboxFollower>> GetFollowers(string channel, int offset = 0, int limit = 10)
 		{
 			if (channel == null)
 				throw new ArgumentNullException("channel");
@@ -820,7 +820,7 @@ namespace HitboxUWP8
 		}
 
 		/// <summary>Get list of channels that specified user follows</summary>
-		public static async Task<IList<HitboxFollower>> GetFollowing(string user, int offset = 0, int limit = 10)
+		public async Task<IList<HitboxFollower>> GetFollowing(string user, int offset = 0, int limit = 10)
 		{
 			if (user == null)
 				throw new ArgumentNullException("user");
@@ -856,7 +856,7 @@ namespace HitboxUWP8
 		}
 
 		/// <summary>Check if user is following given channel</summary>
-		public static async Task<bool> CheckFollowingStatus(string channel, string user)
+		public async Task<bool> CheckFollowingStatus(string channel, string user)
 		{
 			if (channel == null)
 				throw new ArgumentNullException("channel");

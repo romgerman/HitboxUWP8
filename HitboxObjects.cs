@@ -24,11 +24,11 @@ namespace HitboxUWP8
 		public async Task<bool> Follow()   => await client.Follow(Username);
 		public async Task<bool> Unfollow() => await client.Unfollow(ID);
 
-		public async Task<bool> CheckFollowingStatus() => await HitboxClientBase.CheckFollowingStatus(Username, client.User.Username);
+		public async Task<bool> CheckFollowingStatus() => await client.CheckFollowingStatus(Username, client.User.Username);
 
-		public async Task<int> GetTotalViews() => await HitboxClientBase.GetTotalViews(Username);
+		public async Task<int> GetTotalViews() => await client.GetTotalViews(Username);
 
-		public async Task<IList<HitboxProfilePanel>> GetProfilePanels() => await HitboxClientBase.GetProfilePanels(Username);
+		public async Task<IList<HitboxProfilePanel>> GetProfilePanels() => await client.GetProfilePanels(Username);
 	}
 
 	public class HitboxChannel
