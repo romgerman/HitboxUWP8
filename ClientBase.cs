@@ -7,8 +7,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 #endif
 
-using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
 using Windows.Data.Json;
 
 using Newtonsoft.Json;
@@ -17,10 +17,10 @@ using Newtonsoft.Json.Linq;
 namespace HitboxUWP8
 {
 	/// <summary>Base class that contains all functionality</summary>
-	public class HitboxClientBase
+	public class HitboxClientBase : IDisposable
 	{
 		/// <summary>Occurs when a user has logged in</summary>
-		public event EventHandler<LoginEventArgs> LoggedIn;
+		public event EventHandler<HitboxLoginEventArgs> LoggedIn;
 
 		/// <summary>Logged in user</summary>
 		public HitboxUser User { get; set; }
@@ -59,7 +59,7 @@ namespace HitboxUWP8
 
 			if (password == null)
 				throw new ArgumentNullException("password");
-			
+
 			// TODO: basic login
 		}
 
@@ -85,7 +85,7 @@ namespace HitboxUWP8
 
 			if (username == null)
 			{
-				OnLoggedIn(new LoginEventArgs { Method = LoginEventArgs.Methods.Another, State = LoginEventArgs.States.InvalidToken });
+				OnLoggedIn(new HitboxLoginEventArgs { Method = HitboxLoginEventArgs.Methods.Another, State = HitboxLoginEventArgs.States.InvalidToken });
 				return;
 			}
 
@@ -95,7 +95,7 @@ namespace HitboxUWP8
 
 			isLoggedIn = true;
 
-			OnLoggedIn(new LoginEventArgs { Method = LoginEventArgs.Methods.Another, State = LoginEventArgs.States.OK });
+			OnLoggedIn(new HitboxLoginEventArgs { Method = HitboxLoginEventArgs.Methods.Another, State = HitboxLoginEventArgs.States.OK });
 		}
 		
 		/// <summary>Logout from the current client</summary>
@@ -1019,14 +1019,16 @@ namespace HitboxUWP8
 		}
 
 		/// <summary>Get all possible chat colors you can use</summary>
-		public static async Task<IList<string>> GetChatColors()
+		public static async Task<IEnumerable<string>> GetChatColors()
 		{
 			JObject jmessage = JObject.Parse(await Web.GET(HitboxEndpoint.ChatColors));
 
-			IList<string> colors = new List<string>(100);
+			LinkedList<string> colors = new LinkedList<string>();
+
+			LinkedList<string> ll = new LinkedList<string>();
 
 			foreach (JToken jcolor in jmessage["colors"])
-				colors.Add(jcolor.ToString());
+				colors.AddLast(jcolor.ToString());
 
 			return colors;
 		}
@@ -1042,11 +1044,16 @@ namespace HitboxUWP8
 
 		#region Handlers
 
-		protected internal virtual void OnLoggedIn(LoginEventArgs e)
+		protected internal virtual void OnLoggedIn(HitboxLoginEventArgs e)
 		{
 			LoggedIn?.Invoke(this, e);
 		}
 
 		#endregion
+
+		public void Dispose()
+		{
+			User = null;
+		}
 	}
 }

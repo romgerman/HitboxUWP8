@@ -36,9 +36,9 @@ namespace HitboxUWP8
 				string error = url.Substring(7);
 
 				if (error.Equals("user_canceled", StringComparison.CurrentCultureIgnoreCase))
-					client.OnLoggedIn(new LoginEventArgs { Error = error, State = LoginEventArgs.States.Cancelled });
+					client.OnLoggedIn(new HitboxLoginEventArgs { Error = error, State = HitboxLoginEventArgs.States.Cancelled });
 
-				client.OnLoggedIn(new LoginEventArgs { Error = error, State = LoginEventArgs.States.Error, Method = LoginEventArgs.Methods.FirstLogin });
+				client.OnLoggedIn(new HitboxLoginEventArgs { Error = error, State = HitboxLoginEventArgs.States.Error, Method = HitboxLoginEventArgs.Methods.FirstLogin });
 
 				isDone = true;
 			}
@@ -48,7 +48,7 @@ namespace HitboxUWP8
 
 				client.User = await client.GetUser(await client.GetUserFromToken(client.authOrAccessToken), true);
 
-				client.OnLoggedIn(new LoginEventArgs { Token = client.authOrAccessToken, State = LoginEventArgs.States.OK, Method = LoginEventArgs.Methods.FirstLogin });
+				client.OnLoggedIn(new HitboxLoginEventArgs { Token = client.authOrAccessToken, State = HitboxLoginEventArgs.States.OK, Method = HitboxLoginEventArgs.Methods.FirstLogin });
 
 				client.isLoggedIn = true;
 
@@ -60,7 +60,7 @@ namespace HitboxUWP8
 
 				client.User = await client.GetUser(await client.GetUserFromToken(client.authOrAccessToken), true);
 
-				client.OnLoggedIn(new LoginEventArgs { Token = client.authOrAccessToken, State = LoginEventArgs.States.OK, Method = LoginEventArgs.Methods.FirstLogin });
+				client.OnLoggedIn(new HitboxLoginEventArgs { Token = client.authOrAccessToken, State = HitboxLoginEventArgs.States.OK, Method = HitboxLoginEventArgs.Methods.FirstLogin });
 
 				client.isLoggedIn = true;
 

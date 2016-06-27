@@ -54,7 +54,7 @@ namespace HitboxUWP8
 		public string Name		{ get; set; }
 		public string SeoKey	{ get; set; }
 		public int	  Viewers	{ get; set; }
-		public int Channels { get; set; }
+		public int    Channels  { get; set; }
 		public string LogoUrl	{ get; set; }
 	}
 

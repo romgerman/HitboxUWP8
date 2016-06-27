@@ -15,7 +15,7 @@ namespace HitboxUWP8
 	public class HitboxLivestreamViewer
 	{
 		/// <summary>Occurs when viewers/followers/subscribers count changes or livestream goes offline/online</summary>
-		public event EventHandler<ViewerStatusChangedArgs> StatusChanged;
+		public event EventHandler<HitboxViewerStatusChangedArgs> StatusChanged;
 
 		private const string url = "/viewer";
 
@@ -23,9 +23,9 @@ namespace HitboxUWP8
 		private DataWriter writer;
 		private bool isWatching;
 
-		public string channel;
-		public string username;
-		public string token;
+		string channel;
+		string username;
+		string token;
 
 		internal HitboxLivestreamViewer(string channel, string username = "", string token = "")
 		{
@@ -97,7 +97,7 @@ namespace HitboxUWP8
 				{
 					case "infoMsg":
 						{
-							OnStatusChanged(new ViewerStatusChangedArgs
+							OnStatusChanged(new HitboxViewerStatusChangedArgs
 							{
 								Status = new HitboxMediaStatus
 								{
@@ -152,7 +152,7 @@ namespace HitboxUWP8
 
 		// Event handler
 
-		protected virtual void OnStatusChanged(ViewerStatusChangedArgs e)
+		protected virtual void OnStatusChanged(HitboxViewerStatusChangedArgs e)
 		{
 			StatusChanged?.Invoke(this, e);
 		}

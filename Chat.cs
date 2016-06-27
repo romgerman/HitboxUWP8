@@ -8,20 +8,24 @@ using System.Diagnostics;
 using Windows.Data.Json;
 using Windows.Networking.Sockets;
 using Windows.Storage.Streams;
+using Windows.System.Threading;
 
 using Newtonsoft.Json.Linq;
 
 namespace HitboxUWP8
 {
 	/// <summary>Chat</summary>
-	public class HitboxChat // DOTO: chat connection timeout. "If you cannot connect after 8 seconds you should grab another server and connection ID."
+	public class HitboxChat : IDisposable
 	{
 		/// <summary>Occurs when user has been connected to a chat</summary>
 		public event EventHandler Connected;
 		/// <summary>Occurs when user has been logged in chat</summary>
-		public event EventHandler<ChatLoggedInEventArgs> LoggenIn;
+		public event EventHandler<HitboxChatLoggedInEventArgs> LoggedIn;
 		/// <summary>Occurs on new message</summary>
-		public event EventHandler<ChatMessageReceivedEventArgs> MessageReceived;
+		public event EventHandler<HitboxChatMessageReceivedEventArgs> MessageReceived;
+
+		public bool IsConnected { get; private set; }
+		public bool IsLoggedIn { get; private set; }
 
 		private static class MessageType
 		{
@@ -33,8 +37,7 @@ namespace HitboxUWP8
 		private MessageWebSocket _socket;
 		private DataWriter _writer;
 
-		private bool _isConnected;
-		private bool _isLoggedIn;
+		private ThreadPoolTimer _timer;
 
 		private string _token;
 		private string _username;
@@ -53,6 +56,8 @@ namespace HitboxUWP8
 		/// <summary>Connect to a chat server</summary>
 		public async Task Connect()
 		{
+			Debug.WriteLine("Connect");
+
 			_socket = new MessageWebSocket();
 			_writer = new DataWriter(_socket.OutputStream);
 
@@ -62,32 +67,59 @@ namespace HitboxUWP8
 
 			IList<string> servers = await HitboxClientBase.GetChatServers();
 
-			string serverUrl = servers[0];
-			string webSocketID  = await HitboxClientBase.GetChatServerSocketID(serverUrl);
+			string serverUrl = servers[new Random().Next(servers.Count)];
+			string webSocketID = await HitboxClientBase.GetChatServerSocketID(serverUrl);
 			string connectionUrl = "ws://" + serverUrl + "/socket.io/1/websocket/" + webSocketID;
 
-			await _socket.ConnectAsync(new Uri(connectionUrl));
+			_timer = ThreadPoolTimer.CreateTimer(async (timer) =>
+			{
+				if (!IsConnected)
+				{
+					_socket.Close(1000, string.Empty);
+
+					Debug.WriteLine("Close");
+
+					await Connect();
+				}
+				else
+				{
+					Debug.WriteLine("timer Cancel");
+					timer.Cancel();
+				}
+			}, TimeSpan.FromSeconds(8.0));
+
+			try
+			{
+
+				await _socket.ConnectAsync(new Uri(connectionUrl));
+			}
+			catch(Exception ex)
+			{
+				Debug.WriteLine(ex.ToString());
+			}
 		}
 
 		/// <summary>Disconnect from the chat server</summary>
 		public void Disconnect()
 		{
-			if(_isConnected)
+			if(IsConnected)
 			{
-				if(_isLoggedIn)
+				if(IsLoggedIn)
 					Logout();
 
 				_socket.Close(1000, string.Empty);
+
+				Dispose();
 			}
 		}
 
 		/// <summary>Login to a channel chat</summary>
 		public void Login(string channel)
 		{
-			if (!_isConnected)
+			if (!IsConnected)
 				throw new HitboxException();
 
-			if(!_isLoggedIn)
+			if(!IsLoggedIn)
 			{
 				WriteToSocket("5:::" + new JsonObject
 				{
@@ -114,16 +146,16 @@ namespace HitboxUWP8
 			_channel = channel;
 		}
 
-		private void Logout()
+		private void Logout() // TODO: chat logout
 		{
 			WriteToSocket("5:::{\"name\":\"message\",\"args\":[	{\"method\":\"partChannel\",\"params\":{\"name\":\"" + (_username == null ? "UnknownSoldier" : _username) + "\"}}]}");
-			_isLoggedIn = false;
+			IsLoggedIn = false;
 		}
 
 		/// <param name="message">Limited to 300 chars</param>
 		public void SendMessage(string message)
 		{
-			if (!_isLoggedIn)
+			if (!IsLoggedIn)
 				throw new HitboxException(ExceptionList.NotLoggedIn);
 
 			if (message == null)
@@ -155,68 +187,91 @@ namespace HitboxUWP8
 
 		private void _socket_MessageReceived(MessageWebSocket sender, MessageWebSocketMessageReceivedEventArgs args)
 		{
-			using (DataReader reader = args.GetDataReader())
+			try
 			{
-				string read = string.Empty;
-				reader.UnicodeEncoding = UnicodeEncoding.Utf8;
-				read = reader.ReadString(reader.UnconsumedBufferLength);
-
-				switch (read[0])
+				using (DataReader reader = args.GetDataReader())
 				{
-					case MessageType.Connected:
-						{
-							_isConnected = true;
-							OnConnected(new EventArgs());
-						}
-						break;
-					case MessageType.Echo:
-						{
-							WriteToSocket("2::");
-						}
-						break;
-					case MessageType.Interactions:
-						{
-							JObject response = JObject.Parse(read.Substring(4));
-							JObject content = JObject.Parse(response["args"][0].ToString());
+					reader.UnicodeEncoding = UnicodeEncoding.Utf8;
+					string read = reader.ReadString(reader.UnconsumedBufferLength);
 
-							switch (content["method"].ToString())
+					//Debug.WriteLine(read);
+
+					switch (read[0])
+					{
+						case MessageType.Connected:
 							{
-								case "loginMsg":
-									{
-										switch(content["params"]["role"].ToString())
-										{
-											case "guest":
-												_role = HitboxRole.Guest;
-												break;
-											case "anon":
-												_role = HitboxRole.Anon;
-												break;
-											case "user":
-												_role = HitboxRole.User;
-												break;
-											case "admin":
-												_role = HitboxRole.Admin;
-												break;
-										}
-
-										_isLoggedIn = true;
-										OnLoggedIn(new ChatLoggedInEventArgs(_role));
-									}
-									break;
+								IsConnected = true;
+								OnConnected(new EventArgs());
 							}
-						} // Interactions
-						break;
-					default:
-						{
+							break;
+						case MessageType.Echo:
+							{
+								WriteToSocket("2::");
+							}
+							break;
+						case MessageType.Interactions:
+							{
+								JObject response = JObject.Parse(read.Substring(4));
+								JObject content = JObject.Parse(response["args"][0].ToString());
+
+								switch (content["method"].ToString())
+								{
+									case "loginMsg":
+										{
+											switch (content["params"]["role"].ToString())
+											{
+												case "guest":
+													_role = HitboxRole.Guest;
+													break;
+												case "anon":
+													_role = HitboxRole.Anon;
+													break;
+												case "user":
+													_role = HitboxRole.User;
+													break;
+												case "admin":
+													_role = HitboxRole.Admin;
+													break;
+											}
+
+											IsLoggedIn = true;
+											OnLoggedIn(new HitboxChatLoggedInEventArgs(_role));
+										}
+										break;
+									case "chatMsg":
+										{
+											OnMessageReceived(new HitboxChatMessageReceivedEventArgs
+											{
+												Username = content["params"]["name"].ToString(),
+												Text = content["params"]["text"].ToString(),
+												//Time = DateTime.Parse(content["params"]["time"].ToString()),
+												IsFollower = content["params"]["isFollower"].ToObject<bool>(),
+												IsSubscriber = content["params"]["isSubscriber"].ToObject<bool>(),
+												IsOwner = content["params"]["isOwner"].ToObject<bool>(),
+												IsCommunity = content["params"]["isCommunity"].ToObject<bool>(),
+												IsStaff = content["params"]["isStaff"].ToObject<bool>()
+											});
+										}
+										break;
+								}
+							} // Interactions
+							break;
+						default:
+							{
 #if DEBUG
-							Debug.WriteLine(read);
+								Debug.WriteLine(read);
 #endif
 
-							// TODO: reconnect message
-						}
-						break;
-				} // read[0] switch
-			} // using DataReader
+								// TODO: reconnect message
+							}
+							break;
+					} // read[0] switch
+				} // using DataReader
+			}
+			catch(Exception ex)
+			{
+				Debug.WriteLine(ex.ToString());
+			}
 		}
 
 		private void _socket_Closed(IWebSocket sender, WebSocketClosedEventArgs args)
@@ -230,24 +285,31 @@ namespace HitboxUWP8
 			await _writer.StoreAsync();
 		}
 
-#region Handlers
+		#region Handlers
 
 		protected virtual void OnConnected(EventArgs e)
 		{
 			Connected?.Invoke(this, e);
 		}
 
-		protected virtual void OnLoggedIn(ChatLoggedInEventArgs e)
+		protected virtual void OnLoggedIn(HitboxChatLoggedInEventArgs e)
 		{
-			LoggenIn?.Invoke(this, e);
+			LoggedIn?.Invoke(this, e);
 		}
 
-		protected virtual void OnMessageReceived(ChatMessageReceivedEventArgs e)
+		protected virtual void OnMessageReceived(HitboxChatMessageReceivedEventArgs e)
 		{
 			MessageReceived?.Invoke(this, e);
 		}
 
-#endregion
+		#endregion
+
+		public void Dispose()
+		{
+			_socket = null;
+			_writer = null;
+			_timer = null;
+		}
 
 	}
 }

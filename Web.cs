@@ -66,8 +66,8 @@ namespace HitboxUWP8
 			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
 			request.Method = method == Method.GET ? "GET" : "DELETE";
 
-			//try
-			//{
+			try
+			{
 				using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
 				{
 					using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
@@ -75,17 +75,17 @@ namespace HitboxUWP8
 						return reader.ReadToEnd();
 					}
 				}
-			//}
-			//catch (WebException e)
-			//{
-			//	using (HttpWebResponse response = (HttpWebResponse)e.Response)
-			//	{
-			//		using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
-			//		{
-			//			return reader.ReadToEnd();
-			//		}
-			//	}
-			//}
+			}
+			catch (WebException e)
+			{
+				using (HttpWebResponse response = (HttpWebResponse)e.Response)
+				{
+					using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
+					{
+						return reader.ReadToEnd();
+					}
+				}
+			}
 		}
 
 		private static async Task<string> POST_PUT(string url, string body, Method method = Method.POST)
@@ -100,8 +100,8 @@ namespace HitboxUWP8
 				await stream.WriteAsync(jsonAsBytes, 0, jsonAsBytes.Length);
 			}
 
-			//try
-			//{
+			try
+			{
 				using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
 				{
 					using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
@@ -109,17 +109,17 @@ namespace HitboxUWP8
 						return reader.ReadToEnd();
 					}
 				}
-			//}
-			//catch (WebException e)
-			//{
-				//using (HttpWebResponse response = (HttpWebResponse)e.Response)
-				//{
-					//using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
-					//{
-						//return reader.ReadToEnd();
-					//}
-				//}
-			//}
+			}
+			catch (WebException e)
+			{
+				using (HttpWebResponse response = (HttpWebResponse)e.Response)
+				{
+					using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
+					{
+						return reader.ReadToEnd();
+					}
+				}
+			}
 		}
 
 		private static Stream CheckForCompression(HttpWebResponse response)
@@ -146,20 +146,20 @@ namespace HitboxUWP8
 				HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
 				request.Method = "GET";
 
-				//try
-				//{
+				try
+				{
 					using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
 					{
 						return CheckForCompression(response);
 					}
-				//}
-				//catch (WebException e)
-				//{
-					//using (HttpWebResponse response = (HttpWebResponse)e.Response)
-					//{
-						//return CheckForCompression(response);
-					//}
-				//}
+				}
+				catch (WebException e)
+				{
+					using (HttpWebResponse response = (HttpWebResponse)e.Response)
+					{
+						return CheckForCompression(response);
+					}
+				}
 			}
 		}
 	}
