@@ -11,19 +11,30 @@ namespace HitboxUWP8
 		// TODO: methods with HitBoxObjects
 
 		/// <summary>Create a new LivestreamViewer</summary>
-		/// <param name="auth">If not true, then you are viewing a livestream as guest/anonymous</param>
-		public HitboxLivestreamViewer CreateLivestreamViewer(string channel, bool auth = false)
+		/// <param name="authenticate">If not true, then you are viewing a livestream as guest/anonymous</param>
+		public HitboxLivestreamViewer CreateLivestreamViewer(string channel, bool authenticate = true)
 		{
 			if (channel == null)
 				throw new ArgumentNullException("channel");
 
-			if (!isLoggedIn && auth)
+			if (!isLoggedIn && authenticate)
 				throw new HitboxException(ExceptionList.NotLoggedIn);
 
-			if (auth)
+			if (authenticate)
 				return new HitboxLivestreamViewer(channel, User.Username, authOrAccessToken);
 
 			return new HitboxLivestreamViewer(channel);
+		}
+
+		public HitboxChat CreateChat(bool authenticate = true)
+		{
+			if (!isLoggedIn && authenticate)
+				throw new HitboxException(ExceptionList.NotLoggedIn);
+
+			if (authenticate)
+				return new HitboxChat(authOrAccessToken, User.Username);
+
+			return new HitboxChat();
 		}
 	}
 }

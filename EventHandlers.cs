@@ -5,7 +5,7 @@ namespace HitboxUWP8
 	public class HitboxLoginEventArgs : EventArgs
 	{
 		public enum States  { OK, Error, InvalidToken, Cancelled }
-		public enum Methods { FirstLogin, Another }
+		public enum Methods { FirstTime, NotFirstTime }
 
 		public States State   { get; set; }
 		public Methods Method { get; set; }

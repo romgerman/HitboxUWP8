@@ -16,8 +16,9 @@ namespace HitboxUWP8
 		public string   Twitter	  { get; set; }
 		public string   Email	  { get; set; }
 
-		public string AvatarUrl	{ get; set; }
-		public string CoverUrl	{ get; set; }
+		public string AvatarUrlSmall { get; set; }
+		public string AvatarUrlLarge { get; set; }
+		public string CoverUrl { get; set; }
 
 		internal HitboxClientBase client;
 
@@ -71,10 +72,15 @@ namespace HitboxUWP8
 
 	public class HitboxLivestream : HitboxMedia
 	{
-		public int	Viewers			  { get; set; }
-		public bool IsLive			  { get; set; }
-		public bool IsChatEnabled	  { get; set; }
-		public List<string> Countries { get; set; }
+		public int	Viewers			   { get; set; }
+		public bool IsLive			   { get; set; }
+		public bool IsChatEnabled	   { get; set; }
+		public IList<string> Countries { get; set; }
+
+		public int Views { get; set; }
+		public int ViewsDaily { get; set; }
+		public int ViewsWeekly { get; set; }
+		public int ViewsMonthly { get; set; }
 	}
 
 	public class HitboxVideo : HitboxMedia
@@ -88,6 +94,7 @@ namespace HitboxUWP8
 	public class HitboxMediaProfile
 	{
 		public string Url  { get; set; }
+		public int Fps     { get; set; }
 		public int Height  { get; set; }
 		public int Bitrate { get; set; }
 	}

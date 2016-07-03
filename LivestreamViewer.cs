@@ -12,7 +12,7 @@ using Newtonsoft.Json.Linq;
 namespace HitboxUWP8
 {
 	/// <summary>Class for "viewing" a channel</summary>
-	public class HitboxLivestreamViewer
+	public class HitboxLivestreamViewer : IDisposable
 	{
 		/// <summary>Occurs when viewers/followers/subscribers count changes or livestream goes offline/online</summary>
 		public event EventHandler<HitboxViewerStatusChangedArgs> StatusChanged;
@@ -155,6 +155,11 @@ namespace HitboxUWP8
 		protected virtual void OnStatusChanged(HitboxViewerStatusChangedArgs e)
 		{
 			StatusChanged?.Invoke(this, e);
+		}
+
+		public void Dispose()
+		{
+			
 		}
 	}
 }

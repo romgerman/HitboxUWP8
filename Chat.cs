@@ -47,7 +47,7 @@ namespace HitboxUWP8
 
 		public HitboxChat()	{ }
 
-		private HitboxChat(string token, string username)
+		internal HitboxChat(string token, string username)
 		{
 			_token = token;
 			_username = username;
@@ -56,8 +56,6 @@ namespace HitboxUWP8
 		/// <summary>Connect to a chat server</summary>
 		public async Task Connect()
 		{
-			Debug.WriteLine("Connect");
-
 			_socket = new MessageWebSocket();
 			_writer = new DataWriter(_socket.OutputStream);
 
@@ -76,26 +74,23 @@ namespace HitboxUWP8
 				if (!IsConnected)
 				{
 					_socket.Close(1000, string.Empty);
-
-					Debug.WriteLine("Close");
-
 					await Connect();
 				}
 				else
 				{
-					Debug.WriteLine("timer Cancel");
 					timer.Cancel();
 				}
 			}, TimeSpan.FromSeconds(8.0));
 
 			try
 			{
-
 				await _socket.ConnectAsync(new Uri(connectionUrl));
 			}
 			catch(Exception ex)
 			{
+#if DEBUG
 				Debug.WriteLine(ex.ToString());
+#endif
 			}
 		}
 
@@ -114,46 +109,46 @@ namespace HitboxUWP8
 		}
 
 		/// <summary>Login to a channel chat</summary>
-		public void Login(string channel)
+		public async void Login(string channel)
 		{
 			if (!IsConnected)
 				throw new HitboxException();
 
-			if(!IsLoggedIn)
+			if (IsLoggedIn)
+				return;
+
+			await WriteToSocket("5:::" + new JsonObject
 			{
-				WriteToSocket("5:::" + new JsonObject
-				{
-					{ "name", JsonValue.CreateStringValue("message") },
-					{ "args", new JsonArray
+				{ "name", JsonValue.CreateStringValue("message") },
+				{ "args", new JsonArray
+					{
+						new JsonObject
 						{
-							new JsonObject
-							{
-								{ "method", JsonValue.CreateStringValue("joinChannel") },
-								{ "params", new JsonObject
-									{
-										{ "channel", JsonValue.CreateStringValue(channel.ToLower()) },
-										{ "name", JsonValue.CreateStringValue(_username == null ? "UnknownSoldier" : _username) },
-										{ "token", JsonValue.CreateStringValue(_token == null ? "null" : _token) },
-										{ "isAdmin", JsonValue.CreateBooleanValue(false) }
-									}
+							{ "method", JsonValue.CreateStringValue("joinChannel") },
+							{ "params", new JsonObject
+								{
+									{ "channel", JsonValue.CreateStringValue(channel.ToLower()) },
+									{ "name", JsonValue.CreateStringValue(_username == null ? "UnknownSoldier" : _username) },
+									{ "token", JsonValue.CreateStringValue(_token == null ? "null" : _token) },
+									{ "isAdmin", JsonValue.CreateBooleanValue(false) }
 								}
 							}
 						}
 					}
-				}.Stringify());
-			}
+				}
+			}.Stringify());
 
 			_channel = channel;
 		}
 
-		private void Logout() // TODO: chat logout
+		private async void Logout() // TODO: chat logout
 		{
-			WriteToSocket("5:::{\"name\":\"message\",\"args\":[	{\"method\":\"partChannel\",\"params\":{\"name\":\"" + (_username == null ? "UnknownSoldier" : _username) + "\"}}]}");
+			await WriteToSocket("5:::{\"name\":\"message\",\"args\":[	{\"method\":\"partChannel\",\"params\":{\"name\":\"" + (_username == null ? "UnknownSoldier" : _username) + "\"}}]}");
 			IsLoggedIn = false;
 		}
 
 		/// <param name="message">Limited to 300 chars</param>
-		public void SendMessage(string message)
+		public async Task SendMessage(string message)
 		{
 			if (!IsLoggedIn)
 				throw new HitboxException(ExceptionList.NotLoggedIn);
@@ -161,7 +156,7 @@ namespace HitboxUWP8
 			if (message == null)
 				throw new ArgumentNullException("message");
 
-			WriteToSocket("5:::" + new JsonObject
+			await WriteToSocket("5:::" + new JsonObject
 			{
 				{ "name", JsonValue.CreateStringValue("message") },
 				{ "args", new JsonArray
@@ -173,7 +168,7 @@ namespace HitboxUWP8
 								{
 									{ "channel", JsonValue.CreateStringValue(_channel) },
 									{ "name", JsonValue.CreateStringValue(_username) },
-									//{ "nameColor", JsonValue.CreateStringValue("") },
+									{ "nameColor", JsonValue.CreateStringValue("D26E2F") },
 									{ "text", JsonValue.CreateStringValue(message) }
 								}
 							}
@@ -185,7 +180,7 @@ namespace HitboxUWP8
 
 		// http://developers.hitbox.tv/#permissions-and-roles
 
-		private void _socket_MessageReceived(MessageWebSocket sender, MessageWebSocketMessageReceivedEventArgs args)
+		private async void _socket_MessageReceived(MessageWebSocket sender, MessageWebSocketMessageReceivedEventArgs args)
 		{
 			try
 			{
@@ -193,8 +188,6 @@ namespace HitboxUWP8
 				{
 					reader.UnicodeEncoding = UnicodeEncoding.Utf8;
 					string read = reader.ReadString(reader.UnconsumedBufferLength);
-
-					//Debug.WriteLine(read);
 
 					switch (read[0])
 					{
@@ -206,7 +199,7 @@ namespace HitboxUWP8
 							break;
 						case MessageType.Echo:
 							{
-								WriteToSocket("2::");
+								await WriteToSocket("2::");
 							}
 							break;
 						case MessageType.Interactions:
@@ -268,9 +261,11 @@ namespace HitboxUWP8
 					} // read[0] switch
 				} // using DataReader
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
+#if DEBUG
 				Debug.WriteLine(ex.ToString());
+#endif
 			}
 		}
 
@@ -279,13 +274,13 @@ namespace HitboxUWP8
 			//throw new NotImplementedException();
 		}
 
-		private async void WriteToSocket(string message)
+		private async Task WriteToSocket(string message)
 		{
 			_writer.WriteString(message);
 			await _writer.StoreAsync();
 		}
 
-		#region Handlers
+#region Handlers
 
 		protected virtual void OnConnected(EventArgs e)
 		{
@@ -302,7 +297,7 @@ namespace HitboxUWP8
 			MessageReceived?.Invoke(this, e);
 		}
 
-		#endregion
+#endregion
 
 		public void Dispose()
 		{
