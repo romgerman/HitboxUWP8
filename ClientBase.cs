@@ -802,7 +802,7 @@ namespace HitboxUWP8
 			if (channel == null)
 				throw new ArgumentNullException("channel");
 
-			Stream response = await Web.Streams.GET(HitboxEndpoint.Followers + channel + "?offset=" + offset + "&limit=" + limit);
+			Stream response = await Web.Streams.GET(HitboxEndpoint.Followers + channel + "?offset=" + offset + "&limit=" + limit, true);
 
 			using (StreamReader streamReader = new StreamReader(response))
 			{
@@ -838,7 +838,7 @@ namespace HitboxUWP8
 			if (user == null)
 				throw new ArgumentNullException("user");
 
-			Stream response = await Web.Streams.GET(HitboxEndpoint.Following + "?user_name=" + user + "&offset=" + offset + "&limit=" + limit);
+			Stream response = await Web.Streams.GET(HitboxEndpoint.Following + "?user_name=" + user + "&offset=" + offset + "&limit=" + limit, true);
 
 			using (StreamReader streamReader = new StreamReader(response))
 			{
@@ -869,7 +869,8 @@ namespace HitboxUWP8
 		}
 
 		/// <summary>Check if user is following given channel</summary>
-		public async Task<bool> CheckFollowingStatus(string channel, string user)
+		/// <returns>Null if not following</returns>
+		public async Task<HitboxFollowingStatus> CheckFollowingStatus(string channel, string user)
 		{
 			if (channel == null)
 				throw new ArgumentNullException("channel");
@@ -877,12 +878,17 @@ namespace HitboxUWP8
 			if (user == null)
 				throw new ArgumentNullException("user");
 
-			JObject jmessage = JObject.Parse(await Web.GET(HitboxEndpoint.Following + channel + "?user_name=" + user));
+			JObject jmessage = JObject.Parse(await Web.GET(HitboxEndpoint.Following + channel + "?user_name=" + user, true));
 
 			if (!jmessage["error"].IsNull())
-				return false;
+				return null;
 
-			return true;
+			return new HitboxFollowingStatus
+			{
+				UserId = jmessage["following"]["follow_id"].ToObject<int>(),
+				Notify = jmessage["following"]["follower_notify"].ToValue<bool>(),
+				FollowerId = jmessage["following"]["follower_user_id"].ToObject<int>()
+			};
 		}
 
 		// MAYBE: Follower statistics
@@ -913,7 +919,9 @@ namespace HitboxUWP8
 			if (!isLoggedIn)
 				throw new HitboxException(ExceptionList.NotLoggedIn);
 
-			JObject jmessage = JObject.Parse(await Web.DELETE(HitboxEndpoint.Follow + "?type=user&authToken=" + authOrAccessToken + "&follow_id=" + userID));
+			string url = HitboxEndpoint.Follow + "?type=user&authToken=" + authOrAccessToken + "&follow_id=" + userID;
+
+			JObject jmessage = JObject.Parse(await Web.DELETE(url));
 
 			return jmessage["success"].ToObject<bool>();
 		}

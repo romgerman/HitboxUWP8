@@ -12,9 +12,11 @@ namespace HitboxUWP8
 	{
 		private enum Method { GET, DELETE, POST, PUT }
 
-		public static async Task<string> GET(string url)
+		private static Random random = new Random(41780);
+
+		public static async Task<string> GET(string url, bool disableCache = false)
 		{
-			return await GET_DELETE(url);
+			return await GET_DELETE(url, Method.GET, disableCache);
 		}
 
 		public static async Task<string> DELETE(string url)
@@ -61,9 +63,9 @@ namespace HitboxUWP8
 			return await POST_PUT(url, body);
 		}
 
-		private static async Task<string> GET_DELETE(string url, Method method = Method.GET)
+		private static async Task<string> GET_DELETE(string url, Method method = Method.GET, bool disableCache = false)
 		{
-			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url + (disableCache ? "&random=" + random.Next(100000) : string.Empty));
 			request.Method = method == Method.GET ? "GET" : "DELETE";
 
 			using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
@@ -115,9 +117,9 @@ namespace HitboxUWP8
 
 		public static class Streams
 		{
-			public static async Task<Stream> GET(string url)
+			public static async Task<Stream> GET(string url, bool disableCache = false)
 			{
-				HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+				HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url + (disableCache ? "&random=" + random.Next(100000) : string.Empty));
 				request.Method = "GET";
 				
 				using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())

@@ -57,6 +57,8 @@ dlldata.c
 *.scc
 *.user
 
+*.exe
+
 # Visual C++ cache files
 ipch/
 *.aps

@@ -56,6 +56,9 @@ namespace HitboxUWP8
 		/// <summary>Connect to a chat server</summary>
 		public async Task Connect()
 		{
+			if (IsConnected)
+				return;
+
 			_socket = new MessageWebSocket();
 			_writer = new DataWriter(_socket.OutputStream);
 
@@ -97,15 +100,15 @@ namespace HitboxUWP8
 		/// <summary>Disconnect from the chat server</summary>
 		public void Disconnect()
 		{
-			if(IsConnected)
-			{
-				if(IsLoggedIn)
-					Logout();
+			if (!IsConnected)
+				return;
 
-				_socket.Close(1000, string.Empty);
+			if (IsLoggedIn)
+				Logout();
 
-				Dispose();
-			}
+			_socket.Close(1000, string.Empty);
+
+			Dispose();
 		}
 
 		/// <summary>Login to a channel chat</summary>
@@ -141,9 +144,29 @@ namespace HitboxUWP8
 			_channel = channel;
 		}
 
-		private async void Logout() // TODO: chat logout
+		private async void Logout()
 		{
-			await WriteToSocket("5:::{\"name\":\"message\",\"args\":[	{\"method\":\"partChannel\",\"params\":{\"name\":\"" + (_username == null ? "UnknownSoldier" : _username) + "\"}}]}");
+			if (!IsLoggedIn)
+				return;
+
+			await WriteToSocket("5:::" + new JsonObject
+			{
+				{ "name", JsonValue.CreateStringValue("message") },
+				{ "args", new JsonArray
+					{
+						new JsonObject
+						{
+							{ "method", JsonValue.CreateStringValue("partChannel") },
+							{ "params", new JsonObject
+								{
+									{ "name", JsonValue.CreateStringValue(_username ?? "UnknownSoldier") }
+								}
+							}
+						}
+					}
+				}
+			}.Stringify());
+
 			IsLoggedIn = false;
 		}
 
@@ -280,7 +303,7 @@ namespace HitboxUWP8
 			await _writer.StoreAsync();
 		}
 
-#region Handlers
+		#region Handlers
 
 		protected virtual void OnConnected(EventArgs e)
 		{
@@ -297,7 +320,7 @@ namespace HitboxUWP8
 			MessageReceived?.Invoke(this, e);
 		}
 
-#endregion
+		#endregion
 
 		public void Dispose()
 		{

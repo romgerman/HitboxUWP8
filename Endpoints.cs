@@ -2,7 +2,7 @@
 {
 	public static class HitboxEndpoint
 	{
-		public const string ImageStorage	= "http://edge.sf.hitbox.tv/";
+		public const string ImageStorage	= "http://edge.sf.hitbox.tv";
 
 		public const string Api				= "https://api.hitbox.tv/";
 

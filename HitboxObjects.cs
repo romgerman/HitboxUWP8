@@ -25,7 +25,7 @@ namespace HitboxUWP8
 		public async Task<bool> Follow()   => await client.Follow(Username);
 		public async Task<bool> Unfollow() => await client.Unfollow(ID);
 
-		public async Task<bool> CheckFollowingStatus() => await client.CheckFollowingStatus(Username, client.User.Username);
+		public async Task<HitboxFollowingStatus> CheckFollowingStatus() => await client.CheckFollowingStatus(Username, client.User.Username);
 
 		public async Task<int> GetTotalViews() => await client.GetTotalViews(Username);
 
@@ -155,6 +155,13 @@ namespace HitboxUWP8
 	{
 		public bool IsLive { get; set; }
 		public int Viewers { get; set; }
+	}
+
+	public class HitboxFollowingStatus
+	{
+		public int UserId { get; set; }
+		public bool Notify { get; set; }
+		public int FollowerId { get; set; }
 	}
 
 	public class HitboxProfilePanel
