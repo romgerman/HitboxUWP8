@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 
-namespace HitboxUWP8
+namespace HitboxUWP
 {
 	internal static class Extensions
 	{

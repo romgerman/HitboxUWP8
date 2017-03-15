@@ -1,7 +1,5 @@
 ﻿using System;
-#if DEBUG
 using System.Diagnostics;
-#endif
 
 using Windows.Data.Json;
 using Windows.Networking.Sockets;
@@ -9,7 +7,7 @@ using Windows.Storage.Streams;
 
 using Newtonsoft.Json.Linq;
 
-namespace HitboxUWP8
+namespace HitboxUWP
 {
 	/// <summary>Class for "viewing" a channel</summary>
 	public class HitboxLivestreamViewer : IDisposable

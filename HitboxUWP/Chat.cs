@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-#if DEBUG
 using System.Diagnostics;
-#endif
 
 using Windows.Data.Json;
 using Windows.Networking.Sockets;
@@ -12,7 +10,7 @@ using Windows.System.Threading;
 
 using Newtonsoft.Json.Linq;
 
-namespace HitboxUWP8
+namespace HitboxUWP
 {
 	/// <summary>Chat</summary>
 	public class HitboxChat : IDisposable
@@ -23,6 +21,8 @@ namespace HitboxUWP8
 		public event EventHandler<HitboxChatLoggedInEventArgs> LoggedIn;
 		/// <summary>Occurs on new message</summary>
 		public event EventHandler<HitboxChatMessageReceivedEventArgs> MessageReceived;
+		/// <summary>MOTD</summary>
+		public event EventHandler MOTDReceived;
 
 		public bool IsConnected { get; private set; }
 		public bool IsLoggedIn { get; private set; }
@@ -112,7 +112,7 @@ namespace HitboxUWP8
 		}
 
 		/// <summary>Login to a channel chat</summary>
-		public async void Login(string channel)
+		public async void Login(string channel, bool hideBuffered = false)
 		{
 			if (!IsConnected)
 				throw new HitboxException();
@@ -133,7 +133,8 @@ namespace HitboxUWP8
 									{ "channel", JsonValue.CreateStringValue(channel.ToLower()) },
 									{ "name", JsonValue.CreateStringValue(_username == null ? "UnknownSoldier" : _username) },
 									{ "token", JsonValue.CreateStringValue(_token == null ? "null" : _token) },
-									{ "isAdmin", JsonValue.CreateBooleanValue(false) }
+									{ "isAdmin", JsonValue.CreateBooleanValue(false) },
+									{ "hideBuffered", JsonValue.CreateBooleanValue(hideBuffered) }
 								}
 							}
 						}
@@ -191,7 +192,7 @@ namespace HitboxUWP8
 								{
 									{ "channel", JsonValue.CreateStringValue(_channel) },
 									{ "name", JsonValue.CreateStringValue(_username) },
-									{ "nameColor", JsonValue.CreateStringValue("D26E2F") },
+									{ "nameColor", JsonValue.CreateStringValue("9347BD") },
 									{ "text", JsonValue.CreateStringValue(message) }
 								}
 							}
@@ -202,6 +203,8 @@ namespace HitboxUWP8
 		}
 
 		// http://developers.hitbox.tv/#permissions-and-roles
+
+		// 5:::{"name":"message","args":["{\"method\":\"motdMsg\",\"params\":{\"channel\":\"mrzulin\",\"name\":\"mrzulin\",\"nameColor\":\"2CA6C1\",\"text\":\"Огромное спасибо за вашу поддержку! Топ донейшон за сегодня: Vargdru ( 100.00 ). SubCount: 103\",\"time\":1468090583,\"image\":\"/static/img/channel/MrZulin_556b7d1432cda_small.jpg\"}}"]}
 
 		private async void _socket_MessageReceived(MessageWebSocket sender, MessageWebSocketMessageReceivedEventArgs args)
 		{
@@ -303,7 +306,7 @@ namespace HitboxUWP8
 			await _writer.StoreAsync();
 		}
 
-		#region Handlers
+#region Handlers
 
 		protected virtual void OnConnected(EventArgs e)
 		{
@@ -320,7 +323,7 @@ namespace HitboxUWP8
 			MessageReceived?.Invoke(this, e);
 		}
 
-		#endregion
+#endregion
 
 		public void Dispose()
 		{

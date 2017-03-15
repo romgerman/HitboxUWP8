@@ -1,4 +1,5 @@
-﻿namespace HitboxUWP8
+﻿
+namespace HitboxUWP
 {
 	public static class HitboxEndpoint
 	{

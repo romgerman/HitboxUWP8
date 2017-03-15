@@ -5,7 +5,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HitboxUWP8
+namespace HitboxUWP
 {
 	/// <summary>Helper class for web requests</summary>
 	internal static class Web
@@ -30,7 +30,7 @@ namespace HitboxUWP8
 			request.Method = "POST";
 			request.ContentType = "application/json";
 
-			using (var stream = await Task.Factory.FromAsync(request.BeginGetRequestStream, request.EndGetRequestStream, null))
+			using (Stream stream = await Task.Factory.FromAsync(request.BeginGetRequestStream, request.EndGetRequestStream, null))
 			{
 				byte[] jsonAsBytes = Encoding.UTF8.GetBytes(body);
 				await stream.WriteAsync(jsonAsBytes, 0, jsonAsBytes.Length);
@@ -67,7 +67,7 @@ namespace HitboxUWP8
 		{
 			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url + (disableCache ? "&random=" + random.Next(100000) : string.Empty));
 			request.Method = method == Method.GET ? "GET" : "DELETE";
-
+			
 			using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
 			{
 				using (StreamReader reader = new StreamReader(CheckForCompression(response), Encoding.UTF8))
@@ -83,7 +83,7 @@ namespace HitboxUWP8
 			request.Method = method == Method.POST ? "POST" : "PUT";
 			request.ContentType = "application/json";
 
-			using (var stream = await Task.Factory.FromAsync(request.BeginGetRequestStream, request.EndGetRequestStream, null))
+			using (Stream stream = await Task.Factory.FromAsync(request.BeginGetRequestStream, request.EndGetRequestStream, null))
 			{
 				byte[] jsonAsBytes = Encoding.UTF8.GetBytes(body);
 				await stream.WriteAsync(jsonAsBytes, 0, jsonAsBytes.Length);

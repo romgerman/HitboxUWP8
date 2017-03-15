@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace HitboxUWP8
+namespace HitboxUWP
 {
 	public class HitboxLoginEventArgs : EventArgs
 	{

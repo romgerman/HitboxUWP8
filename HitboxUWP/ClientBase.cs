@@ -5,18 +5,16 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-#if DEBUG
 using System.Diagnostics;
-#endif
 
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.Data.Json;
+using Windows.Data.Json; // TODO: remove this shit and use Newton.Json JObject instead
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace HitboxUWP8
+namespace HitboxUWP
 {
 	/// <summary>Base class that contains all functionality</summary>
 	public class HitboxClientBase : IDisposable
@@ -116,7 +114,7 @@ namespace HitboxUWP8
 				throw new ArgumentNullException("requestToken");
 
 			string hash = Convert.ToBase64String(Encoding.UTF8.GetBytes(appKey + appSecret));
-
+			
 			string response = await Web.POST(HitboxEndpoint.ExchangeRequest, new JsonObject
 			{
 				{ "request_token", JsonValue.CreateStringValue(requestToken) },
@@ -229,16 +227,16 @@ namespace HitboxUWP8
 				AccessUserID  = jmessage["access_user_id"].ToObject<int>(),
 				IsFollower    = jmessage["isFollower"].ToObject<bool>(),
 				IsSubscriber  = jmessage["isSubscriber"].ToObject<bool>(),
-				Settings      = jmessage["settings"].ToString() == "admin" ? HitboxRole.Admin : HitboxRole.Anon,
-				Account       = jmessage["account"].ToString() == "admin" ? HitboxRole.Admin : HitboxRole.Anon,
+				Settings      = jmessage["settings"].ToString()  == "admin" ? HitboxRole.Admin : HitboxRole.Anon,
+				Account       = jmessage["account"].ToString()   == "admin" ? HitboxRole.Admin : HitboxRole.Anon,
 				Broadcast     = jmessage["broadcast"].ToString() == "admin" ? HitboxRole.Admin : HitboxRole.Anon,
 				Livestreams   = jmessage["livestreams"].ToString() == "admin" ? HitboxRole.Admin : HitboxRole.Anon,
 				Revenues      = jmessage["revenues"].ToString() == "admin" ? HitboxRole.Admin : HitboxRole.Anon,
-				Videos        = jmessage["videos"].ToString() == "admin" ? HitboxRole.Admin : HitboxRole.Anon,
+				Videos        = jmessage["videos"].ToString()   == "admin" ? HitboxRole.Admin : HitboxRole.Anon,
 				Recordings    = jmessage["recordings"].ToString() == "admin" ? HitboxRole.Admin : HitboxRole.Anon,
 				Statistics    = jmessage["statistics"].ToString() == "admin" ? HitboxRole.Admin : HitboxRole.Anon,
 				Inbox         = jmessage["inbox"].ToString() == "admin" ? HitboxRole.Admin : HitboxRole.Anon,
-				Chat          = jmessage["chat"].ToString() == "admin" ? HitboxRole.Admin : HitboxRole.Anon,
+				Chat          = jmessage["chat"].ToString()  == "admin" ? HitboxRole.Admin : HitboxRole.Anon,
 				Following     = jmessage["following"].ToString() == "admin" ? HitboxRole.Admin : HitboxRole.Anon,
 				Teams         = jmessage["teams"].ToString() == "admin" ? HitboxRole.Admin : HitboxRole.Anon,
 				Payments      = jmessage["payments"].ToString() == "admin" ? HitboxRole.Admin : HitboxRole.Anon,
@@ -291,7 +289,7 @@ namespace HitboxUWP8
 
 			if (channel == null)
 				throw new ArgumentNullException("channel");
-
+			
 			JObject jmessage = JObject.Parse(await Web.POST(HitboxEndpoint.CommercialBreak + channel + "/" + amount, new JsonObject
 			{
 				{ "user_name", JsonValue.CreateStringValue(User.Username) },
@@ -374,7 +372,7 @@ namespace HitboxUWP8
 
 			if (message == null)
 				throw new ArgumentNullException("message");
-
+			
 			JObject jmessage = JObject.Parse(await Web.POST(HitboxEndpoint.TwitterPost + "?authToken=" + authOrAccessToken + "&user_name=" + User.Username, new JsonObject
 			{
 				{ "user_name", JsonValue.CreateStringValue(User.Username) },
@@ -397,7 +395,7 @@ namespace HitboxUWP8
 
 			if (message == null)
 				throw new ArgumentNullException("message");
-
+			
 			JObject jmessage = JObject.Parse(await Web.POST(HitboxEndpoint.FacebookPost + "?authToken=" + authOrAccessToken + "&user_name=" + User.Username, new JsonObject
 			{
 				{ "user_name", JsonValue.CreateStringValue(User.Username) },
@@ -606,7 +604,7 @@ namespace HitboxUWP8
 
 			return new HitboxMediaStatus
 			{
-				IsLive = jmessage["media_is_live"].ToValue<bool>(),
+				IsLive  = jmessage["media_is_live"].ToValue<bool>(),
 				Viewers = jmessage["media_views"].ToObject<int>()
 			};
 		}
@@ -902,7 +900,7 @@ namespace HitboxUWP8
 
 			if (usernameOrUserID == null)
 				throw new ArgumentNullException("usernameOrUserID");
-
+			
 			JObject jmessage = JObject.Parse(await Web.POST(HitboxEndpoint.Follow + "?authToken=" + authOrAccessToken, new JsonObject
 			{
 				{ "type", JsonValue.CreateStringValue("user") },
@@ -1061,14 +1059,14 @@ namespace HitboxUWP8
 					Uploads Team Logo or Cover
 					Upload Emoji Image*/
 
-		#region Handlers
+#region Handlers
 
 		protected internal virtual void OnLoggedIn(HitboxLoginEventArgs e)
 		{
 			LoggedIn?.Invoke(this, e);
 		}
 
-		#endregion
+#endregion
 
 		public void Dispose()
 		{

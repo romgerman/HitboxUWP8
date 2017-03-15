@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace HitboxUWP8
+namespace HitboxUWP
 {
 	public class HitboxUser
 	{

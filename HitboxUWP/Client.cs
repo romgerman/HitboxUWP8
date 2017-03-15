@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace HitboxUWP8
+namespace HitboxUWP
 {
 	/// <summary>Main class that you should use</summary>
 	public class HitboxClient : HitboxClientBase
